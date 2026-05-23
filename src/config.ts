@@ -12,6 +12,7 @@ function envOrThrow(key: string): string {
 
 type Config = {
   db: DBConfig;
+  port: number;
 };
 
 type DBConfig = {
@@ -22,4 +23,5 @@ export const config: Config = {
   db: {
     url: envOrThrow("DB_URL"),
   },
+  port: Number(process.env.PORT) || 3000,
 };
