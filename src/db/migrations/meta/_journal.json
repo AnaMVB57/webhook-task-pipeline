@@ -15,6 +15,13 @@
       "when": 1779407412190,
       "tag": "0001_harsh_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779511468766,
+      "tag": "0002_open_karnak",
+      "breakpoints": true
     }
   ]
 }
