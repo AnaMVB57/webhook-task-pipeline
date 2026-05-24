@@ -22,8 +22,8 @@ const createActionSchema = z.object({
 });
 
 const updateActionSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().min(1),
+  name: z.string().optional(),
+  description: z.string().optional(),
   config: z.record(z.string(), z.unknown()).optional(),
 });
 
