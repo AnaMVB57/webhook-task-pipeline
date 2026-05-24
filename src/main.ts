@@ -4,6 +4,8 @@ import { handleCreateUser, handleDeleteUser, handleGetAllUsers, handleGetUserByI
 import { handleCreateAction, handleDeleteAction, handleGetActionById, handleGetAllActions, handleUpdateAction } from "./app/api/actions/actions.js";
 import { handleCreatePipeline, handleDeletePipeline, handleGetAllPipelines, handleGetPipelineById, handleUpdatePipeline } from "./app/api/pipelines/pipelines.js";
 import { errorHandler } from "./app/middleware/error/errorHandler.js";
+import { handleCreateSubscriber, handleDeleteSubscriber, handleGetAllSubscribers, handleGetSubscriberById, handleGetSubscribersByPipeline, handleUpdateSubscriber } from "./app/api/subscribers/subscribers.js";
+import { handleGetAllJobs, handleGetJobById, handleGetJobDeliveries } from "./app/api/jobs/jobs.js";
 
 const app = express();
 app.use(express.json());
@@ -33,6 +35,19 @@ app.get("/api/pipelines/:id", handleGetPipelineById);
 app.post("/api/pipelines", handleCreatePipeline);
 app.put("/api/pipelines/:id", handleUpdatePipeline);
 app.delete("/api/pipelines/:id", handleDeletePipeline);
+
+// Subscribers
+app.get("/api/subscribers", handleGetAllSubscribers);
+app.get("/api/subscribers/pipeline/:pipelineId", handleGetSubscribersByPipeline);
+app.get("/api/subscribers/:id", handleGetSubscriberById);
+app.post("/api/subscribers", handleCreateSubscriber);
+app.put("/api/subscribers/:id", handleUpdateSubscriber);
+app.delete("/api/subscribers/:id", handleDeleteSubscriber);
+
+// Jobs (solo lectura — los crea el worker)
+app.get("/api/jobs", handleGetAllJobs);
+app.get("/api/jobs/:id", handleGetJobById);
+app.get("/api/jobs/:id/deliveries", handleGetJobDeliveries);
 
 app.use(errorHandler);
 
