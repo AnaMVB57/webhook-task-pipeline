@@ -85,6 +85,8 @@ export const jobs = pgTable("jobs", {
   status: jobStatusEnum("status").notNull().default("pending"),
   payload: jsonb("payload").notNull(),
   output: jsonb("output"),
+  attempts: integer("attempts").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(3),
 });
 
 export const deliveryAttempts = pgTable("delivery_attempts", {
