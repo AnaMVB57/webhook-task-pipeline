@@ -8,7 +8,9 @@ async function pollPendingJobs(): Promise<void> {
     const pendingJobs = await getPendingJobs();
 
     if (pendingJobs.length > 0) {
-      console.log(`Worker found ${pendingJobs.length} pending job(s), processing...`);
+      console.log(
+        `Worker found ${pendingJobs.length} pending job(s), processing...`,
+      );
       await Promise.all(pendingJobs.map((job) => runJob(job)));
     }
   } catch (error) {
