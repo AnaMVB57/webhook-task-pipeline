@@ -12,7 +12,7 @@ function wait(ms: number) {
 // Tries to deliver payload to specific URL
 async function deliverOnce(
   url: string,
-  payload: unknown
+  payload: unknown,
 ): Promise<{ success: boolean; responseCode: number | null }> {
   try {
     const response = await fetch(url, {
@@ -26,8 +26,11 @@ async function deliverOnce(
       success: response.ok,
       responseCode: response.status,
     };
-  } catch {
-    // URL didn't respond or network error
+  } catch (error) {
+    // Network error, DNS failure, or timeout — no HTTP code available
+    const reason =
+      error instanceof Error ? error.message : "Unknown network error";
+    console.error(`[Delivery] Network error delivering to ${url}: ${reason}`);
     return {
       success: false,
       responseCode: null,
@@ -39,11 +42,15 @@ async function deliverOnce(
 async function deliverToSubscriber(
   jobId: string,
   subscriber: Subscriber,
-  payload: unknown
+  payload: unknown,
 ): Promise<void> {
   for (let attempt = 1; attempt <= MAX_DELIVERY_ATTEMPTS; attempt++) {
-    const { success, responseCode } = await deliverOnce(subscriber.url, payload);
+    const { success, responseCode } = await deliverOnce(
+      subscriber.url,
+      payload,
+    );
 
+    // Record every attempt regardless of outcome
     await createDeliveryAttempt({
       id: randomUUID(),
       jobId,
@@ -57,24 +64,33 @@ async function deliverToSubscriber(
       return;
     }
 
-    console.log(`Delivery failed to ${subscriber.url} (attempt ${attempt}/${MAX_DELIVERY_ATTEMPTS})`);
+    console.warn(
+      `[Delivery] Failed to deliver to ${subscriber.url} — attempt ${attempt}/${MAX_DELIVERY_ATTEMPTS}` +
+        (responseCode ? ` (HTTP ${responseCode})` : " (no response)"),
+    );
 
     // If it's not the last try, it waits before trying again
     if (attempt < MAX_DELIVERY_ATTEMPTS) {
-      await wait(RETRY_DELAY_MS * attempt); // exponential delay: 2s, 4s
+      const delay = RETRY_DELAY_MS * attempt; // 2s, then 4s
+      console.log(`[Delivery] Retrying in ${delay / 1000}s...`);
+      await wait(RETRY_DELAY_MS * attempt); // exponential delay: 2s, then 4s
     }
   }
+
+  console.error(
+    `[Delivery] All ${MAX_DELIVERY_ATTEMPTS} attempts failed for subscriber ${subscriber.id} (${subscriber.url})`,
+  );
 }
 
-// Delivers to all job susbcribers in paralel
 export async function deliverToAllSubscribers(
   jobId: string,
   subscribers: Subscriber[],
-  payload: unknown
+  payload: unknown,
 ): Promise<void> {
+  // Delivers to all job susbcribers in paralel
   await Promise.all(
     subscribers.map((subscriber) =>
-      deliverToSubscriber(jobId, subscriber, payload)
-    )
+      deliverToSubscriber(jobId, subscriber, payload),
+    ),
   );
 }
