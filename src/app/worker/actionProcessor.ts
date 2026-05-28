@@ -21,11 +21,26 @@ function calculateTotal(
 
   const quantityProp = config.quantityField ?? "quantity";
 
-  const total = array.reduce((sum: number, item: unknown) => {
+  const total = array.reduce((sum: number, item: unknown, index: number) => {
     const record = item as Record<string, unknown>;
-    const price = Number(record[config.priceField]) || 0;
 
-    const quantity = Number(record[quantityProp]) || 1;
+    const priceRaw = record[config.priceField];
+    const quantityRaw =
+      record[quantityProp] !== undefined ? record[quantityProp] : 1;
+
+    const price = Number(priceRaw);
+    if (typeof priceRaw !== "number" || Number.isNaN(price)) {
+      throw new Error(
+        `Validation Error: El campo de precio en el item ${index} no es un número válido.`,
+      );
+    }
+
+    const quantity = Number(quantityRaw);
+    if (typeof quantityRaw !== "number" || Number.isNaN(quantity)) {
+      throw new Error(
+        `Validation Error: El campo de cantidad en el item ${index} no es un número válido.`,
+      );
+    }
 
     return sum + price * quantity;
   }, 0);
@@ -37,58 +52,7 @@ function calculateTotal(
   };
 }
 
-// ─── Action 2: TRANSLATE_TEXT ─────────────────────────────────────────────────
-// Translates text field using MyMemory API via fetch.
-// Config: { textField: "message", languageField: "lang" }
-
-const defaultMessages: Record<string, string> = {
-  en: "Your order has been processed. Thank you for your purchase.",
-};
-
-async function translateText(
-  payload: ActionResult,
-  config: { textField: string; languageField: string },
-): Promise<ActionResult> {
-  const targetLang = (payload[config.languageField] as string) ?? "en";
-  const textToTranslate = payload[config.textField] as string;
-
-  if (!textToTranslate || typeof textToTranslate !== "string") {
-    throw new Error(
-      `Field "${config.textField}" is missing or not a string in the payload`,
-    );
-  }
-
-  // rate limiting, waits 10s
-  await new Promise((resolve) => setTimeout(resolve, 10000));
-
-  let translatedText = textToTranslate;
-
-  try {
-    const response = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=es|${targetLang}`,
-    );
-
-    if (!response.ok) throw new Error("Translation API response was not ok");
-
-    const data = await response.json();
-    if (data.responseStatus === 200) {
-      translatedText = data.responseData.translatedText;
-    } else {
-      throw new Error(data.responseDetails || "API internal error");
-    }
-  } catch {
-    // If the translation fails, use local messages
-    console.warn(`Translation API unavailable.`);
-    // translatedText = defaultMessages["en"];
-  }
-
-  return {
-    ...payload,
-    translated_text: translatedText,
-  };
-}
-
-// ─── Action 3: TEXT_TEMPLATER ─────────────────────────────────────────────────
+// ─── Action 2: TEXT_TEMPLATER ─────────────────────────────────────────────────
 // Replaces {{field}} variables. Auto-formats arrays for item summaries
 // Config: { template: "..." }
 
@@ -120,6 +84,76 @@ function textTemplater(
   };
 }
 
+// ─── Action 3: TRANSLATE_TEXT ─────────────────────────────────────────────────
+// Translates text field using MyMemory API via fetch.
+// Config: { textField: "message", languageField: "lang" }
+
+// const defaultMessages: Record<string, string> = {
+//   en: "Your order has been processed. Thank you for your purchase.",
+// };
+
+async function translateText(
+  payload: ActionResult,
+  config: { textField: string; languageField: string; subjectField?: string },
+): Promise<ActionResult> {
+  const targetLang = (payload[config.languageField] as string) ?? "en";
+  const textToTranslate = payload[config.textField] as string;
+  const subjectToTranslate = config.subjectField
+    ? (payload[config.subjectField] as string)
+    : undefined;
+
+  if (!textToTranslate || typeof textToTranslate !== "string") {
+    throw new Error(
+      `Field "${config.textField}" is missing or not a string in the payload`,
+    );
+  }
+
+  // rate limiting, waits 10s
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+
+  let translatedText = textToTranslate;
+  let translatedSubject = subjectToTranslate;
+
+  const fetchTranslation = async (text: string): Promise<string> => {
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`,
+    );
+
+    if (!response.ok) throw new Error("Translation API response was not ok");
+
+    const data = await response.json();
+    if (data.responseStatus === 200) {
+      return data.responseData.translatedText;
+    }
+    throw new Error(data.responseDetails || "API internal error");
+  };
+
+  try {
+    translatedText = await fetchTranslation(textToTranslate);
+  } catch (error) {
+    console.warn(
+      `[Translate API] Body translation unavailable. Using default message. ${error}`,
+    );
+  }
+
+  // 2. Traducir el asunto (Solo si se proporcionó en la configuración)
+  if (subjectToTranslate) {
+    try {
+      translatedSubject = await fetchTranslation(subjectToTranslate);
+    } catch (error) {
+      console.warn(
+        `[Translate API] Subject translation unavailable. Using default message. ${error}`,
+      );
+    }
+  }
+
+  return {
+    ...payload,
+    translated_text: translatedText,
+    ...(config.subjectField ? { translated_subject: translatedSubject } : {}),
+  };
+}
+
 // ─── Action 4: SEND_EMAIL ─────────────────────────────────────────────────────
 // Sends formatted_text field as an email using Ethereal Email
 // Config: { toField: "email", subjectField: "subject", bodyField: "formatted_text" }
@@ -129,6 +163,20 @@ async function sendEmail(
   config: { toField: string; subjectField?: string; bodyField?: string },
 ): Promise<ActionResult> {
   const to = payload[config.toField] as string;
+
+  if (!to || typeof to !== "string") {
+    throw new Error(
+      `Error: Field "${config.toField}" is missing or is not a valid email.`,
+    );
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(to)) {
+    throw new Error(
+      `Error: Given value (${to}) it's not a valid email format.`,
+    );
+  }
+
   const subject =
     config.subjectField && payload[config.subjectField]
       ? (payload[config.subjectField] as string)
@@ -137,52 +185,58 @@ async function sendEmail(
   const bodyField = config.bodyField ?? "formatted_text";
   const text = (payload[bodyField] as string) ?? JSON.stringify(payload);
 
-  if (!to || typeof to !== "string") {
-    throw new Error(`Field "${config.toField}" is not a valid email`);
-  }
+  try {
+    const testAccount = await nodemailer.createTestAccount();
+    const transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      auth: { user: testAccount.user, pass: testAccount.pass },
+    });
 
-  const testAccount = await nodemailer.createTestAccount();
-  const transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    auth: { user: testAccount.user, pass: testAccount.pass },
-  });
+    const htmlBody = text.replace(/\n/g, "<br>");
 
-  const htmlBody = text.replace(/\n/g, "<br>");
-
-  const htmlTemplate = `
+    const htmlTemplate = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 550px; margin: 20px auto; padding: 30px; border: 1px solid #eef2f5; border-radius: 10px; color: #333333; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
-      <div style="border-bottom: 2px solid #f1f3f5; padding-bottom: 15px; margin-bottom: 20px;">
-        <h2 style="margin: 0; color: #2c3e50; font-size: 20px; font-weight: 600;">${subject}</h2>
-      </div>
-      
-      <div style="font-size: 15px; color: #4a5568;">
-        ${htmlBody}
-      </div>
-      
-      <div style="margin-top: 35px; border-top: 1px solid #f1f3f5; padding-top: 15px; text-align: center;">
-        <p style="font-size: 12px; color: #a0aec0; margin: 0;">
-          Este es un correo electrónico automatizado enviado por el sistema de órdenes.
-        </p>
-      </div>
+    <div style="border-bottom: 2px solid #f1f3f5; padding-bottom: 15px; margin-bottom: 20px;">
+    <h2 style="margin: 0; color: #2c3e50; font-size: 20px; font-weight: 600;">${subject}</h2>
     </div>
-  `;
+    
+    <div style="font-size: 15px; color: #4a5568;">
+    ${htmlBody}
+    </div>
+    
+    <div style="margin-top: 35px; border-top: 1px solid #f1f3f5; padding-top: 15px; text-align: center;">
+    <p style="font-size: 12px; color: #a0aec0; margin: 0;">
+    This is an automated email sent by the order system Storey.
+    </p>
+    </div>
+    </div>
+    `;
 
-  const info = await transporter.sendMail({
-    from: '"Sales system - Storey" <sales@storey.com>',
-    to,
-    subject,
-    html: htmlTemplate,
-  });
+    const info = await transporter.sendMail({
+      from: '"Sales system - Storey" <sales@storey.com>',
+      to,
+      subject,
+      html: htmlTemplate,
+    });
 
-  const previewUrl = nodemailer.getTestMessageUrl(info);
-  console.log(`-> Email preview URL: ${previewUrl}`);
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    console.log(`-> Email preview URL: ${previewUrl}`);
 
-  return {
-    ...payload,
-    email_sent: true,
-    email_preview_url: previewUrl || null,
-  };
+    return {
+      ...payload,
+      email_sent: true,
+      email_preview_url: previewUrl || null,
+    };
+  } catch (error) {
+    console.error(
+      "Error connecting to email service or sending email: ",
+      error,
+    );
+    throw new Error(
+      `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }
 
 // ─── Main runner ─────────────────────────────────────────────────────────
@@ -195,17 +249,45 @@ export async function processJob(
   const payload = job.payload as ActionResult;
   const config = actionConfig ?? {};
 
+  // Validate that actionName is one of the existing action types before executing
+  const existingActions = [
+    "CALCULATE_TOTAL",
+    "TEXT_TEMPLATER",
+    "TRANSLATE_TEXT",
+    "SEND_EMAIL",
+  ];
+  if (!existingActions.includes(actionName)) {
+    throw new Error(
+      `Unknown action: "${actionName}". Valid actions are: ${existingActions.join(", ")}`,
+    );
+  }
+
+  // Validate that config exists for actions that require it
+  if (actionName !== "SEND_EMAIL" && Object.keys(config).length === 0) {
+    throw new Error(
+      `Action "${actionName}" requires a config object but none was provided.`,
+    );
+  }
+
   switch (actionName) {
     case "CALCULATE_TOTAL":
       return calculateTotal(
         payload,
-        config as { arrayField: string; priceField: string },
+        config as {
+          arrayField: string;
+          priceField: string;
+          quantityField?: string;
+        },
       );
 
     case "TRANSLATE_TEXT":
       return await translateText(
         payload,
-        config as { textField: string; languageField: string },
+        config as {
+          textField: string;
+          languageField: string;
+          subjectField?: string;
+        },
       );
 
     case "TEXT_TEMPLATER":
@@ -214,7 +296,11 @@ export async function processJob(
     case "SEND_EMAIL":
       return await sendEmail(
         payload,
-        config as { toField: string; subjectField?: string },
+        config as {
+          toField: string;
+          subjectField?: string;
+          bodyField?: string;
+        },
       );
 
     default:
