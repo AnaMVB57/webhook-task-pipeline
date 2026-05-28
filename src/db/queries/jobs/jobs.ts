@@ -8,17 +8,11 @@ export async function getAllJobs() {
 }
 
 export async function getJobsByPipelineId(pipelineId: string) {
-  return await db
-    .select()
-    .from(jobs)
-    .where(eq(jobs.pipelineId, pipelineId));
+  return await db.select().from(jobs).where(eq(jobs.pipelineId, pipelineId));
 }
 
 export async function getJobById(id: string) {
-  const [result] = await db
-    .select()
-    .from(jobs)
-    .where(eq(jobs.id, id));
+  const [result] = await db.select().from(jobs).where(eq(jobs.id, id));
   if (!result) {
     throw new NotFoundError("Job not found");
   }
@@ -26,17 +20,14 @@ export async function getJobById(id: string) {
 }
 
 export async function createJob(data: NewJob) {
-  const [result] = await db
-    .insert(jobs)
-    .values(data)
-    .returning();
+  const [result] = await db.insert(jobs).values(data).returning();
   return result;
 }
 
 export async function updateJobStatus(
   id: string,
   status: "pending" | "processing" | "completed" | "failed",
-  output?: unknown
+  output?: unknown,
 ) {
   const [result] = await db
     .update(jobs)
@@ -51,7 +42,7 @@ export async function updateJobStatus(
 
 export async function incrementJobAttempts(
   id: string,
-  status: "processing" | "failed"
+  status: "processing" | "failed",
 ) {
   const current = await getJobById(id);
 
@@ -72,9 +63,10 @@ export async function getPendingJobs() {
     .select()
     .from(jobs)
     .where(
-      and(
-        eq(jobs.status, "pending"),
-        lt(jobs.attempts, jobs.maxAttempts)
-      )
+      and(eq(jobs.status, "pending"), lt(jobs.attempts, jobs.maxAttempts)),
     );
+}
+
+export async function deleteAllJobs() {
+  return await db.delete(jobs);
 }

@@ -16,3 +16,8 @@ export async function createDeliveryAttempt(data: NewDeliveryAttempt) {
     .returning();
   return result;
 }
+
+
+export async function deleteAllDeliveryAttempts() {
+  return await db.delete(deliveryAttempts);
+}
