@@ -1,5 +1,6 @@
 import { getActionById } from "../../db/queries/actions/actions.js";
 import {
+  getJobById,
   incrementJobAttempts,
   updateJobStatus,
 } from "../../db/queries/jobs/jobs.js";
@@ -7,16 +8,36 @@ import { getSubscribersByPipelineId } from "../../db/queries/subscribers/subscri
 import { Job } from "../../db/schema.js";
 import { deliverToAllSubscribers } from "./resultsDelivery.js";
 import { processJob } from "./actionProcessor.js";
+import { getPipelineById } from "../../db/queries/pipelines/pipelines.js";
 
 export async function runJob(job: Job): Promise<void> {
-  console.log(`Processing job ${job.id}...`);
+  // Fetch fresh job state. A polling worker may pick up a job already being processed
+  const freshJob = await getJobById(job.id);
+
+  // Skip jobs already completed or permanently failed
+  if (freshJob.status === "completed" || freshJob.status === "failed") {
+    console.log(`[Worker] Skipping job ${job.id} — already ${freshJob.status}`);
+    return;
+  }
+
+  // Skip jobs that exhausted retries
+  if (freshJob.attempts >= freshJob.maxAttempts) {
+    console.warn(
+      `[Worker] Job ${job.id} reached max attempts (${freshJob.maxAttempts}), marking as failed`,
+    );
+    await updateJobStatus(job.id, "failed");
+    return;
+  }
+
+  console.log(
+    `[Worker] Processing job ${job.id} (attempt ${freshJob.attempts + 1}/${freshJob.maxAttempts})`,
+  );
 
   await incrementJobAttempts(job.id, "processing");
 
   try {
-    // 1. Get pipeline's action
-    const pipeline = await import("../../db/queries/pipelines/pipelines.js");
-    const pipelineData = await pipeline.getPipelineById(job.pipelineId);
+    // Get pipeline by id
+    const pipelineData = await getPipelineById(job.pipelineId);
 
     //Lineage tracking
 
@@ -24,7 +45,7 @@ export async function runJob(job: Job): Promise<void> {
     const currentPayload =
       typeof job.payload === "string"
         ? JSON.parse(job.payload)
-        : (job.payload as Record<string, any>);
+        : (job.payload as Record<string, unknown>);
 
     // We get the last trace or initialize an empty array
     const trace: string[] = Array.isArray(currentPayload._trace)
@@ -47,7 +68,7 @@ export async function runJob(job: Job): Promise<void> {
 
     const action = await getActionById(pipelineData.actionId);
 
-    // 2. Execute the action on the payload
+    // Execute the action on the payload
     const output = await processJob(
       job,
       action.name,
@@ -56,16 +77,26 @@ export async function runJob(job: Job): Promise<void> {
 
     await updateJobStatus(job.id, "completed", output);
 
-    // 3. Get active subscribers from pipeline
+    // Get active subscribers from pipeline
     const allSubscribers = await getSubscribersByPipelineId(job.pipelineId);
     const activeSubscribers = allSubscribers.filter((s) => s.active);
+
+    if (activeSubscribers.length === 0) {
+      console.log(
+        `[Worker] Job ${job.id} completed — no active subscribers to deliver to`,
+      );
+      return;
+    }
 
     await deliverToAllSubscribers(job.id, activeSubscribers, output);
 
     console.log(`Job ${job.id} completed successfully`);
   } catch (error) {
     // Mark job as failed is anything goes wrong
-    console.error(`Job ${job.id} failed:`, error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    console.error(`Job ${job.id} failed: ${errorMessage}`);
     await updateJobStatus(job.id, "failed");
   }
 }
