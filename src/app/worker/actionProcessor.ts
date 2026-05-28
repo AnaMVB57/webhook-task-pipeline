@@ -5,7 +5,7 @@ type ActionResult = Record<string, unknown>;
 
 // ─── Action 1: CALCULATE_TOTAL ────────────────────────────────────────────────
 // Iterates an array inside the payload and sum the values of a number field.
-// Config: { arrayField: "items", valueField: "price" }
+// Config: { arrayField: "items", priceField: "price", quantityField: "quantity" }
 
 function calculateTotal(
   payload: ActionResult,
