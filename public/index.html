@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webhook pipeline dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+  <div class="container mx-auto p-6 max-w-7xl">
+    <header class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-indigo-400">Pipeline control center</h1>
+        <p class="text-sm text-slate-400">Real-time job monitoring and pipeline orchestration</p>
+      </div>
+      
+      <button id="polling-badge" onclick="togglePolling()" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs cursor-pointer hover:bg-slate-700 transition border border-emerald-500/20 select-none">
+        <span id="polling-indicator" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="polling-text">Polling active (2s)</span>
+      </button>
+    </header>
+
+    <section class="mb-8 bg-slate-800/50 p-5 rounded-xl border border-slate-800">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-slate-300">Trigger test cases</h2>
+        
+        <button onclick="clearDatabaseHistory()" class="bg-slate-900 border border-rose-500/40 text-rose-400 hover:bg-rose-950/40 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
+          Clear history
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <button onclick="triggerPipeline('success')" class="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-lg font-medium transition flex flex-col items-start gap-1 cursor-pointer shadow-md">
+          <span class="text-sm font-bold">Success case</span>
+          <span class="text-xs text-emerald-100 font-normal text-left">Chains: calculate -> template -> translate (de) -> email</span>
+        </button>
+
+        <button onclick="triggerPipeline('fatal-items')" class="bg-rose-600 hover:bg-rose-500 text-white p-3 rounded-lg font-medium transition flex flex-col items-start gap-1 cursor-pointer shadow-md">
+          <span class="text-sm font-bold">Fatal error</span>
+          <span class="text-xs text-rose-100 font-normal text-left">Fails immediately: empty items array</span>
+        </button>
+
+        <button onclick="triggerPipeline('fatal-email')" class="bg-amber-600 hover:bg-amber-500 text-white p-3 rounded-lg font-medium transition flex flex-col items-start gap-1 cursor-pointer shadow-md">
+          <span class="text-sm font-bold">Chained error</span>
+          <span class="text-xs text-amber-100 font-normal text-left">Runs steps 1-3 smoothly, then fails at email due to missing field</span>
+        </button>
+
+      </div>
+    </section>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <section class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+        <h2 class="text-lg font-bold mb-4 text-rose-400 flex items-center justify-between">
+          <span>Failed jobs</span>
+          <span id="failed-count" class="text-xs bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded-full font-mono">0</span>
+        </h2>
+        <div id="failed-jobs-container" class="space-y-4 min-h-[150px]">
+          </div>
+      </section>
+
+      <section class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+        <h2 class="text-lg font-bold mb-4 text-blue-400 flex items-center justify-between">
+          <span>In progress</span>
+          <span id="processing-count" class="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-mono">0</span>
+        </h2>
+        <div id="processing-jobs-container" class="space-y-4 min-h-[150px]">
+          </div>
+      </section>
+
+      <section class="bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+        <h2 class="text-lg font-bold mb-4 text-emerald-400 flex items-center justify-between">
+          <span>Pending and completed</span>
+          <span id="completed-count" class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-mono">0</span>
+        </h2>
+        <div id="completed-jobs-container" class="space-y-4 min-h-[150px]">
+          </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api';
+    //Calculate total amount pipeline (first one in the pipeline chain)
+    const WEBHOOK_URL = 'http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446';
+
+    let isPollingActive = true;
+    let pollingIntervalId = null;
+
+    const payloads = {
+      success: {
+        customer: "Hans",
+        email: "hans.v60@example.com",
+        lang: "de",
+        items: [{ name: "Kenia Specialty Coffee", quantity: 1, price: 9200 }]
+      },
+      'fatal-items': {
+        customer: "Mob",
+        email: "mob.psycho@example.com",
+        lang: "es",
+        store_name: "Spirits & Such Consultation",
+        items: []
+      },
+      'fatal-email': {
+        customer: "Faye Valentine",
+        lang: "fr",
+        store_name: "Bebop Commerce",
+        items: [{ name: "Filtros Kalita Wave", quantity: 3, price: 6000 }]
+      }
+    };
+
+    function togglePolling() {
+      isPollingActive = !isPollingActive;
+      const badge = document.getElementById('polling-badge');
+      const indicator = document.getElementById('polling-indicator');
+      const text = document.getElementById('polling-text');
+
+      if (isPollingActive) {
+        indicator.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        text.innerText = "Polling active (2s)";
+        badge.className = "flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs cursor-pointer hover:bg-slate-700 transition border border-emerald-500/20 select-none";
+        startPolling();
+      } else {
+        indicator.className = "w-2 h-2 rounded-full bg-amber-500";
+        text.innerText = "Polling paused";
+        badge.className = "flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs cursor-pointer hover:bg-slate-700 transition border border-amber-500/40 select-none";
+        stopPolling();
+      }
+    }
+
+    function startPolling() {
+      fetchJobs();
+      pollingIntervalId = setInterval(fetchJobs, 2000);
+    }
+
+    function stopPolling() {
+      if (pollingIntervalId) clearInterval(pollingIntervalId);
+    }
+
+    async function triggerPipeline(type) {
+      try {
+        const response = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloads[type])
+        });
+        if (response.ok) {
+          if (isPollingActive) fetchJobs();
+        } else {
+          alert('Server rejected payload delivery setup.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error contacting endpoint server.');
+      }
+    }
+
+    async function clearDatabaseHistory() {
+      if (!confirm('Are you sure you want to completely wipe the tables history? This cannot be undone.')) return;
+      
+      try {
+        const response = await fetch(`${API_URL}/jobs/reset`, { method: 'POST' });
+        if (response.ok) {
+          fetchJobs();
+        } else {
+          alert('Failed to clear tables records.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Network connection drop during wipe request.');
+      }
+    }
+
+    function getStatusBadge(status) {
+      const styles = {
+        pending: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        processing: 'bg-blue-500/10 text-blue-400 border-blue-500/30 animate-pulse',
+        completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        failed: 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+      };
+      return `<span class="px-2 py-1 rounded text-xs font-mono font-bold border ${styles[status] || styles.pending}">${status.toUpperCase()}</span>`;
+    }
+
+    function renderJobCard(job) {
+      const payloadString = typeof job.payload === 'string' ? job.payload : JSON.stringify(job.payload, null, 2);
+      const traceCount = job.payload?._trace?.length || 0;
+
+      return `
+        <div class="bg-slate-800 rounded-xl border border-slate-700/60 p-4 shadow-lg transition-all hover:border-indigo-500/40">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded">${job.id.slice(0,8)}...</span>
+                ${getStatusBadge(job.status)}
+                <span class="text-xs text-slate-400">Attempts: <strong>${job.attempts}/${job.maxAttempts}</strong></span>
+                ${traceCount > 1 ? `<span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded-full font-medium">Chain link #${traceCount - 1}</span>` : ''}
+              </div>
+              <p class="text-sm text-slate-300 font-medium">Pipeline target id: <span class="font-mono text-xs text-indigo-300">${job.pipelineId}</span></p>
+            </div>
+            <div class="text-right text-xs text-slate-500 font-mono">
+              ${job.updatedAt ? new Date(job.updatedAt).toLocaleTimeString() : ''}
+            </div>
+          </div>
+          
+          <details class="mt-3 border-t border-slate-700/40 pt-2">
+            <summary class="text-xs text-slate-400 hover:text-slate-200 cursor-pointer select-none">View job state payload</summary>
+            <pre class="mt-2 p-3 bg-slate-950 rounded text-xs font-mono text-indigo-200 overflow-x-auto max-h-40 font-mono">${payloadString}</pre>
+          </details>
+        </div>
+      `;
+    }
+
+    async function fetchJobs() {
+      try {
+        const response = await fetch(`${API_URL}/jobs`);
+        if (!response.ok) return;
+        const jobs = await response.json();
+        
+        jobs.sort((a, b) => new Date(b.createdAt || 1) - new Date(a.createdAt || 1));
+        
+        // Segregation filters
+        const failedJobs = jobs.filter(j => j.status === 'failed');
+        const processingJobs = jobs.filter(j => j.status === 'processing');
+        const completedJobs = jobs.filter(j => j.status === 'completed' || j.status === 'pending');
+
+        // Counters update
+        document.getElementById('failed-count').innerText = failedJobs.length;
+        document.getElementById('processing-count').innerText = processingJobs.length;
+        document.getElementById('completed-count').innerText = completedJobs.length;
+
+        const failedContainer = document.getElementById('failed-jobs-container');
+        const processingContainer = document.getElementById('processing-jobs-container');
+        const completedContainer = document.getElementById('completed-jobs-container');
+
+        // Column 1
+        if (failedJobs.length === 0) {
+          failedContainer.innerHTML = '<div class="text-center py-8 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">No failures detected. System running smoothly.</div>';
+        } else {
+          failedContainer.innerHTML = failedJobs.map(renderJobCard).join('');
+        }
+
+        // Column 2
+        if (processingJobs.length === 0) {
+          processingContainer.innerHTML = '<div class="text-center py-8 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">No active jobs currently processing.</div>';
+        } else {
+          processingContainer.innerHTML = processingJobs.map(renderJobCard).join('');
+        }
+
+        // Column 3
+        if (completedJobs.length === 0) {
+          completedContainer.innerHTML = '<div class="text-center py-8 text-slate-600 text-sm border border-dashed border-slate-800 rounded-xl">No pending or completed jobs recorded.</div>';
+        } else {
+          completedContainer.innerHTML = completedJobs.map(renderJobCard).join('');
+        }
+
+      } catch (err) {
+        console.error("Dashboard synchronization error:", err);
+      }
+    }
+
+    startPolling();
+  </script>
+</body>
+</html>
