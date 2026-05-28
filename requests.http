@@ -324,3 +324,110 @@ Content-Type: application/json
   "status": "En proceso de envío",
   "items": []
 }
+
+### ────────────────────────────────────────────────────────────────────────────
+### TEST CASES: NEW VALIDATIONS & RETRY LOGIC
+### ────────────────────────────────────────────────────────────────────────────
+
+### Case 1: Fatal Error in CALCULATE_TOTAL (Empty items array)
+### Expected: Pipeline throws "ValidationError". Worker aborts retries
+### immediately and the Job ends in 'failed' (Attempt 1/3 only).
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Mob",
+  "email": "mob.psycho@example.com",
+  "lang": "es",
+  "store_name": "Spirits & Such Consultation",
+  "items": []
+}
+
+
+### Case 2: Fatal Error in CALCULATE_TOTAL (Item without price)
+### Expected: Throws "ValidationError" at the item index. Aborts retries.
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Reigen Arataka",
+  "email": "reigen@example.com",
+  "lang": "es",
+  "store_name": "Spirits & Such Consultation",
+  "items": [
+    { "name": "Low-level exorcism", "quantity": 1, "price": 5000 },
+    { "name": "Shoulder massage with salt", "quantity": 2 } 
+  ]
+}
+
+
+### Case 3: Success with Fallbacks in TEXT_TEMPLATER (Missing business fields)
+### Expected: Pipeline finishes SUCCESSFULLY. Does not break due to empty fields;
+### the email will be sent using default values ("Our Store", today's date, etc.)
+### Language: German ("de")
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Hans",
+  "email": "hans.v60@example.com",
+  "lang": "de",
+  "items": [
+    { "name": "Kenia Specialty Coffee", "quantity": 1, "price": 9200 }
+  ]
+}
+
+
+### Case 4: Successful Bypass in TRANSLATE_TEXT (Target Language: English)
+### Expected: Detects "lang": "en" and interrupts the flow to MyMemory API.
+### Avoids the "SAME_LANGUAGES" error and processes everything in a single, instant attempt.
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Spike Spiegel",
+  "email": "spike@bebop.space",
+  "lang": "en",
+  "store_name": "Ruta Austral Store",
+  "date": "2026-05-28",
+  "status": "In transit",
+  "subject": "Space Delivery Update",
+  "items": [
+    { "name": "Bell peppers and beef (No beef)", "quantity": 1, "price": 1200 }
+  ]
+}
+
+
+### Case 5: Fatal Error in SEND_EMAIL (No email property in the payload)
+### Expected: Actions 1, 2, and 3 succeed. Upon reaching SEND_EMAIL it throws
+### "ValidationError: The email field..." and stops dead without useless retries.
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Faye Valentine",
+  "lang": "fr",
+  "store_name": "Bebop Commerce",
+  "items": [
+    { "name": "Kalita Wave filters", "quantity": 3, "price": 6000 }
+  ]
+}
+
+
+### Case 6: Simulation of Temporary Error (External Translation API Down/Invalid)
+### Expected: Send a language pair that breaks the API or an invalid code ("xyz").
+### If your `fetchTranslation` sub-function throws a common error (not a ValidationError),
+### you will see in your console how the job changes to 'pending' and retries every 10 seconds
+### until exhausting the 3 attempts in your WSL terminal.
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Jet Black",
+  "email": "jet.mechanic@example.com",
+  "lang": "xyz",
+  "store_name": "Ruta Austral",
+  "items": [
+    { "name": "Ship spare parts", "quantity": 1, "price": 45000 }
+  ]
+}
