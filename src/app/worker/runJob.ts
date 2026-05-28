@@ -96,7 +96,37 @@ export async function runJob(job: Job): Promise<void> {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
-    console.error(`Job ${job.id} failed: ${errorMessage}`);
-    await updateJobStatus(job.id, "failed");
+    const isValidationError =
+      errorMessage.startsWith("ValidationError:") ||
+      errorMessage.includes("does not exist") ||
+      errorMessage.includes("is missing") ||
+      errorMessage.includes("does not contain") ||
+      errorMessage.includes("not a valid");
+
+    //1. Case: bussiness rules validation
+    if (isValidationError) {
+      console.error(
+        `[Worker] Aborting retries for Job ${job.id} due to corrupt or missing data.`,
+      );
+      await updateJobStatus(job.id, "failed");
+      return;
+    }
+
+    //2. Case: Temorary error (Network, API, etc)
+    const currentAttempt = freshJob.attempts + 1;
+
+    if (currentAttempt >= freshJob.maxAttempts) {
+      // Exceeded real sistem's retry limit
+      console.error(
+        `[Worker] Job ${job.id} failed all retry attempts (${freshJob.maxAttempts}/${freshJob.maxAttempts}). Marking as 'failed' definitely.`,
+      );
+      await updateJobStatus(job.id, "failed");
+    } else {
+      // There's still retries left. Mark as 'pending' so that polling will retry.
+      console.warn(
+        `[Worker] Retry programmed for Job ${job.id} (${currentAttempt}/${freshJob.maxAttempts}). Coming back to 'pending' status.`,
+      );
+      await updateJobStatus(job.id, "pending");
+    }
   }
 }

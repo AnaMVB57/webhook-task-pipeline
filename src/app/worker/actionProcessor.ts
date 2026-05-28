@@ -13,9 +13,9 @@ function calculateTotal(
 ): ActionResult {
   const array = payload[config.arrayField];
 
-  if (!Array.isArray(array)) {
+  if (!array || !Array.isArray(array) || array.length === 0) {
     throw new Error(
-      `Field "${config.arrayField}" is not an array in the payload`,
+      `Field "${config.arrayField}" does not exist or it's not in payload.`,
     );
   }
 
@@ -28,17 +28,26 @@ function calculateTotal(
     const quantityRaw =
       record[quantityProp] !== undefined ? record[quantityProp] : 1;
 
-    const price = Number(priceRaw);
-    if (typeof priceRaw !== "number" || Number.isNaN(price)) {
+    if (priceRaw === undefined || priceRaw === null) {
       throw new Error(
-        `Validation Error: El campo de precio en el item ${index} no es un número válido.`,
+        `Error: The item on index ${index} does not contain the price.`,
       );
     }
 
-    const quantity = Number(quantityRaw);
+    const price = Number(priceRaw);
+    if (typeof priceRaw !== "number" || Number.isNaN(price)) {
+      throw new Error(
+        `Error: Price field on item ${index} is not a valid number.`,
+      );
+    }
+
+    const quantity =
+      quantityRaw !== undefined && quantityRaw !== null
+        ? Number(quantityRaw)
+        : 1;
     if (typeof quantityRaw !== "number" || Number.isNaN(quantity)) {
       throw new Error(
-        `Validation Error: El campo de cantidad en el item ${index} no es un número válido.`,
+        `Error: Quantity field on item ${index} is not a valid number.`,
       );
     }
 
@@ -60,12 +69,20 @@ function textTemplater(
   payload: ActionResult,
   config: { template: string },
 ): ActionResult {
+  const fallbacks: Record<string, string> = {
+    customer: "dear client",
+    store_name: "our store",
+    date: new Date().toISOString().split("T")[0], // Today's date
+    status: "Confirmed",
+  };
+
   const formatted = config.template.replace(
     /\{\{(\w+)\}\}/g,
     (_match, key: string) => {
       const value = payload[key];
 
       if (Array.isArray(value)) {
+        if (value.length === 0) return "(No selected products. Please contact support.)";
         return value
           .map(
             (item) =>
@@ -74,7 +91,12 @@ function textTemplater(
           .join("\n");
       }
 
-      return value !== undefined ? String(value) : `{{${key}}}`;
+      if (value !== undefined && value !== null && value !== "") {
+        return String(value);
+      }
+
+    // If it doesn't exist in payload, uses fallback. If doesn't, it's left empty.
+      return fallbacks[key] !== undefined ? fallbacks[key] : "";
     },
   );
 
@@ -108,6 +130,15 @@ async function translateText(
     );
   }
 
+  //if the client's language is english, we don't fetch the API
+  if (targetLang.toLowerCase() === "en") {
+    return {
+      ...payload,
+      translated_text: textToTranslate,
+      ...(subjectToTranslate ? { translated_subject: subjectToTranslate } : {}),
+    };
+  }
+
   // rate limiting, waits 10s
   await new Promise((resolve) => setTimeout(resolve, 10000));
 
@@ -136,7 +167,7 @@ async function translateText(
     );
   }
 
-  // 2. Traducir el asunto (Solo si se proporcionó en la configuración)
+  // Translate the subject (if given in the config)
   if (subjectToTranslate) {
     try {
       translatedSubject = await fetchTranslation(subjectToTranslate);
