@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, lt, and } from "drizzle-orm";
 import { jobs, NewJob } from "../../../db/schema.js";
 import { db } from "../../index.js";
 import { NotFoundError } from "../../../app/middleware/error/errors.js";
@@ -47,4 +47,34 @@ export async function updateJobStatus(
     throw new NotFoundError("Job not found");
   }
   return result;
+}
+
+export async function incrementJobAttempts(
+  id: string,
+  status: "processing" | "failed"
+) {
+  const current = await getJobById(id);
+
+  const [result] = await db
+    .update(jobs)
+    .set({
+      attempts: current.attempts + 1,
+      status,
+    })
+    .where(eq(jobs.id, id))
+    .returning();
+
+  return result;
+}
+
+export async function getPendingJobs() {
+  return await db
+    .select()
+    .from(jobs)
+    .where(
+      and(
+        eq(jobs.status, "pending"),
+        lt(jobs.attempts, jobs.maxAttempts)
+      )
+    );
 }
