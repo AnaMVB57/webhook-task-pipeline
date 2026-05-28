@@ -158,15 +158,6 @@ Define reusable processing logic. Each action has a `name`, `description`, and a
 }
 ```
  
-`TRANSLATE_TEXT` — translates a text field using the MyMemory API:
-```json
-{
-  "name": "TRANSLATE_TEXT",
-  "description": "Translates the message to the customer's language",
-  "config": { "textField": "message", "languageField": "lang" }
-}
-```
- 
 `TEXT_TEMPLATER` — fills a template string with `{{field}}` variables:
 ```json
 {
@@ -177,13 +168,22 @@ Define reusable processing logic. Each action has a `name`, `description`, and a
   }
 }
 ```
+
+`TRANSLATE_TEXT` — translates a text field using the MyMemory API:
+```json
+{
+  "name": "TRANSLATE_TEXT",
+  "description": "Translates the formatted text to the customer's language",
+  "config": { "textField": "formatted_text", "subjectField": "subject", "languageField": "lang" }
+}
+```
  
 `SEND_EMAIL` — sends the `formatted_text` field as an email via Ethereal:
 ```json
 {
   "name": "SEND_EMAIL",
-  "description": "Sends the formatted text as an email to the customer",
-  "config": { "toField": "email", "subjectField": "subject", "bodyField": "body" }
+  "description": "Sends the translated text as an email to the customer",
+  "config": { "toField": "email", "subjectField": "translated_subject", "bodyField": "translated_text" }
 }
 ```
  
@@ -307,11 +307,11 @@ POST /api/webhooks/<token-pipeline-1>   ← entry point
          ▼ CALCULATE_TOTAL
          │  adds: total_amount
          │
-         ▼ TRANSLATE_TEXT
-         │  adds: translated_text
-         │
          ▼ TEXT_TEMPLATER
          │  adds: formatted_text
+         │
+         ▼ TRANSLATE_TEXT
+         │  adds: translated_text
          │
          ▼ SEND_EMAIL
             sends email → email_sent: true, email_preview_url: "..."
