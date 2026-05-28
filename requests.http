@@ -96,6 +96,39 @@ Content-Type: application/json
   }
 }
 
+### Update action config (Example)
+PUT http://localhost:3000/api/actions/f2d8b728-ce46-443d-a815-f175c2599b2d
+Content-Type: application/json
+
+{
+  "config": {
+    "textField": "formatted_text",
+    "languageField": "lang",
+    "subjectField": "subject"
+  }
+}
+
+### Update action config (Example)
+PUT http://localhost:3000/api/actions/47f6ecf5-4e64-426f-b25b-504b3d3f0c68
+Content-Type: application/json
+
+{
+  "config": {
+  "toField": "email",
+  "subjectField": "translated_subject",
+  "bodyField": "translated_text"
+}
+}
+
+### Update Action 2: TEXT_TEMPLATER
+PUT http://localhost:3000/api/actions/80316db3-b39f-4f46-a130-595d6a26c722
+Content-Type: application/json
+
+{
+  "config": { "template": "Hello {{}}customer{{}}!\n\nThank you for choosing {{}}store_name{{}}. This is a summary of your purchase made on {{}}date{{}}:\n\n{{}}items{{}}\n\nSubtotal: ${{}}subtotal{{}}\nTotal paid: ${{}}total_amount{{}}\n\nCurrent status of your order: {{}}status{{}}\n\nWe hope to see you soon!" }
+}
+
+
 ### Delete action by id
 DELETE http://localhost:3000/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
 
@@ -238,13 +271,56 @@ Content-Type: application/json
 {
   "customer": "Anton",
   "email": "anton.yak12@yamail.com",
-  "lang": "en",
+  "lang": "pt",
   "store_name": "Ruta Austral",
   "date": "2026-05-27",
-  "status": "En proceso de envío",
-  "subject": "Order Confirmation / Confirmación de compra",
+  "status": "Shipping",
+  "subject": "Order Confirmation",
   "items": [
     { "name": "Café Tueste Medio 250g", "quantity": 12, "price": 8500 },
     { "name": "Filtros de papel V60", "quantity": 2, "price": 4500 }
   ]
+}
+
+# ______________________________________________________________________________
+
+### Test Error handling (malformed JSON: missing closing quote for "customer")
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer: "Anton",
+  "email": "anton.yak12@yamail.com",
+  "lang": "en",
+  "store_name": "Ruta Austral",
+  "date": "2026-05-27",
+  "status": "En proceso de envío",
+  "items": [
+    { "name": "Café Tueste Medio 250g", "quantity": 12, "price": 8500 },
+    { "name": "Filtros de papel V60", "quantity": 2, "price": 4500 }
+  ]
+}
+
+### Test Error handling (missing 'store_name', 'date', 'status' fields)
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Anton",
+  "email": "anton.yak12@yamail.com",
+  "lang": "en",
+  "items": []
+}
+
+### Test Error handling (missing 'email' field, empty items)
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Yareli",
+  "lang": "en",
+  "store_name": "Ruta Austral",
+  "date": "2026-05-27",
+  "status": "En proceso de envío",
+  "items": []
 }
