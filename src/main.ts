@@ -6,6 +6,7 @@ import { handleCreatePipeline, handleDeletePipeline, handleGetAllPipelines, hand
 import { errorHandler } from "./app/middleware/error/errorHandler.js";
 import { handleCreateSubscriber, handleDeleteSubscriber, handleGetAllSubscribers, handleGetSubscriberById, handleGetSubscribersByPipeline, handleUpdateSubscriber } from "./app/api/subscribers/subscribers.js";
 import { handleGetAllJobs, handleGetJobById, handleGetJobDeliveries } from "./app/api/jobs/jobs.js";
+import { handleWebhook } from "./app/api/webhooks/webhooks.js";
 
 const app = express();
 app.use(express.json());
@@ -44,10 +45,12 @@ app.post("/api/subscribers", handleCreateSubscriber);
 app.put("/api/subscribers/:id", handleUpdateSubscriber);
 app.delete("/api/subscribers/:id", handleDeleteSubscriber);
 
-// Jobs (solo lectura — los crea el worker)
+// Jobs (readonly - created by worker)
 app.get("/api/jobs", handleGetAllJobs);
 app.get("/api/jobs/:id", handleGetJobById);
 app.get("/api/jobs/:id/deliveries", handleGetJobDeliveries);
+
+app.post("/api/webhooks/:sourceToken", handleWebhook);
 
 app.use(errorHandler);
 

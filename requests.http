@@ -1,5 +1,10 @@
+# Variables for VS Code REST Client
+@ldelim = {{
+@rdelim = }}
+
 ### Health check
 GET http://localhost:3000/health
+
 
 ### ─── USERS ───────────────────────────────────────────
 
@@ -23,12 +28,13 @@ PUT http://localhost:3000/api/users/9c83aeee-4f10-4538-a55a-b7053b7bf0a2
 Content-Type: application/json
 
 {
-  "name": "Ana García Villarán",
+  "name": "Ana García Rodríguez",
   "email": "ana@example.com"
 }
 
 ### Delete user by id
 DELETE http://localhost:3000/api/users/46dd8d78-f82f-4159-8674-6685c48b969c
+
 
 ### ─── ACTIONS ─────────────────────────────────────────
 
@@ -36,49 +42,63 @@ DELETE http://localhost:3000/api/users/46dd8d78-f82f-4159-8674-6685c48b969c
 GET http://localhost:3000/api/actions
 
 ### Get action by id
-GET http://localhost:3000/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
+GET http://localhost:3000/api/actions/73619324-2e47-4570-9787-489f172bdba3
 
-### Create action
+### Action 1: CALCULATE_TOTAL
 POST http://localhost:3000/api/actions
 Content-Type: application/json
 
 {
-  "name": "add-timestamp",
-  "description": "Adds a timestamp to the payload",
-  "config": { "timezone": "UTC" }
+  "name": "CALCULATE_TOTAL",
+  "description": "Sums numeric values from an array field in the payload",
+  "config": { "arrayField": "items", "priceField": "price", "quantityField": "quantity" }
 }
 
-### Create action - filter-fields
+### Action 2: TEXT_TEMPLATER
 POST http://localhost:3000/api/actions
 Content-Type: application/json
 
 {
-  "name": "filter-fields",
-  "description": "Filters specific fields from the payload",
-  "config": { "fields": ["email", "amount"] }
+  "name": "TEXT_TEMPLATER",
+  "description": "Fills a text template with payload values",
+  "config": { "template": "¡Hola {{ldelim}}customer{{rdelim}}!\n\nGracias por elegir {{ldelim}}store_name{{rdelim}}. Este es un resumen de tu compra realizada el {{ldelim}}date{{rdelim}}:\n\n{{ldelim}}items{{rdelim}}\n\nSubtotal: ${{ldelim}}subtotal{{rdelim}}\nTotal Pagado: ${{ldelim}}total_amount{{rdelim}}\n\nEstado actual de tu pedido: {{ldelim}}status{{rdelim}}\n\n¡Esperamos verte pronto!" }
 }
 
-### Create action - transform-json
+### Action 3: TRANSLATE_TEXT
 POST http://localhost:3000/api/actions
 Content-Type: application/json
 
 {
-  "name": "transform-json",
-  "description": "Renames fields in the payload",
-  "config": { "rename": { "user_id": "userId", "amt": "amount" } }
+  "name": "TRANSLATE_TEXT",
+  "description": "Translates formatted_text to customer language",
+  "config": { "textField": "formatted_text", "languageField": "lang" }
 }
 
-### Edit action by id
-PUT http://localhost:3000/api/actions/4b9ef6e4-754f-46b9-afa5-daad8ba47a58
+### Action 4: SEND_EMAIL
+POST http://localhost:3000/api/actions
 Content-Type: application/json
 
 {
-  "description": "Adds a UTC timestamp to the payload",
-  "config": { "timezone": "UTC"}
+  "name": "SEND_EMAIL",
+  "description": "Sends the translated text as an email via Ethereal",
+  "config": { "toField": "email", "subjectField": "subject", "bodyField": "translated_text" }
+}
+
+### Update action config (Example)
+PUT http://localhost:3000/api/actions/9e9baf6f-bcf7-4428-b2c7-250027482c5f
+Content-Type: application/json
+
+{
+  "config": {
+    "arrayField": "items",
+    "priceField": "price",
+    "quantityField": "quantity"
+  }
 }
 
 ### Delete action by id
 DELETE http://localhost:3000/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
+
 
 ### ─── PIPELINES ───────────────────────────────────────
 
@@ -86,20 +106,50 @@ DELETE http://localhost:3000/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
 GET http://localhost:3000/api/pipelines
 
 ### Get pipeline by id
-GET http://localhost:3000/api/pipelines/daa453ff-7457-4cee-b086-e06b2956d62d
+GET http://localhost:3000/api/pipelines/bf8ccd92-763b-4cb1-a38d-b21248a1a59f
 
-### Create pipeline
+### Create pipeline 1 (Calculate)
 POST http://localhost:3000/api/pipelines
 Content-Type: application/json
 
 {
-  "name": "My first pipeline",
+  "name": "Calculate total amount",
   "userId": "9c83aeee-4f10-4538-a55a-b7053b7bf0a2",
-  "actionId": "73619324-2e47-4570-9787-489f172bdba3"
+  "actionId": "9e9baf6f-bcf7-4428-b2c7-250027482c5f"
+}
+
+### Create pipeline 2 (Template)
+POST http://localhost:3000/api/pipelines
+Content-Type: application/json
+
+{
+  "name": "Create text template",
+  "userId": "9c83aeee-4f10-4538-a55a-b7053b7bf0a2",
+  "actionId": "80316db3-b39f-4f46-a130-595d6a26c722"
+}
+
+### Create pipeline 3 (Translate)
+POST http://localhost:3000/api/pipelines
+Content-Type: application/json
+
+{
+  "name": "Translate text message",
+  "userId": "9c83aeee-4f10-4538-a55a-b7053b7bf0a2",
+  "actionId": "f2d8b728-ce46-443d-a815-f175c2599b2d"
+}
+
+### Create pipeline 4 (Email)
+POST http://localhost:3000/api/pipelines
+Content-Type: application/json
+
+{
+  "name": "Send email to customer",
+  "userId": "9c83aeee-4f10-4538-a55a-b7053b7bf0a2",
+  "actionId": "47f6ecf5-4e64-426f-b25b-504b3d3f0c68"
 }
 
 ### Edit pipeline by id
-PUT http://localhost:3000/api/pipelines/daa453ff-7457-4cee-b086-e06b2956d62d
+PUT http://localhost:3000/api/pipelines/da8bc89a-85b1-48e5-a44e-44afe36b4846
 Content-Type: application/json
 
 {
@@ -108,7 +158,8 @@ Content-Type: application/json
 }
 
 ### Delete pipeline by id
-DELETE http://localhost:3000/api/pipelines/daa453ff-7457-4cee-b086-e06b2956d62d
+DELETE http://localhost:3000/api/pipelines/04df5936-4b81-414e-a3b3-f640c17aafad
+
 
 ### ─── SUBSCRIBERS ─────────────────────────────────────
 
@@ -116,22 +167,46 @@ DELETE http://localhost:3000/api/pipelines/daa453ff-7457-4cee-b086-e06b2956d62d
 GET http://localhost:3000/api/subscribers
 
 ### Get subscribers by pipeline id
-GET http://localhost:3000/api/subscribers/pipeline/PASTE_PIPELINE_ID_HERE
+GET http://localhost:3000/api/subscribers/pipeline/33bdc773-5f6a-4a76-8b89-77262579ebda
 
-### Get subscriber by id
-GET http://localhost:3000/api/subscribers/PASTE_SUBSCRIBER_ID_HERE
-
-### Create subscriber
+### 1. Pipeline 1 (Calculate) -> points to Pipeline 2 (Template)
 POST http://localhost:3000/api/subscribers
 Content-Type: application/json
 
 {
-  "pipelineId": "bf8ccd92-763b-4cb1-a38d-b21248a1a59f",
-  "url": "https://webhook.site/PASTE_YOUR_UNIQUE_URL_HERE"
+  "pipelineId": "9ccaa884-91f0-482f-a05e-5293810badd1",
+  "url": "http://localhost:3000/api/webhooks/674b821f-086e-4e47-a955-936e18662654"
+}
+
+### 2. Pipeline 2 (Template) -> points to Pipeline 3 (Translate)
+POST http://localhost:3000/api/subscribers
+Content-Type: application/json
+
+{
+  "pipelineId": "f065e32e-0f05-48ad-bf69-98189653a32d",
+  "url": "http://localhost:3000/api/webhooks/e5cc6c39-734b-4dd0-96d6-2da58996c04c"
+}
+
+### 3. Pipeline 3 (Translate) -> points to Pipeline 4 (Email)
+POST http://localhost:3000/api/subscribers
+Content-Type: application/json
+
+{
+  "pipelineId": "140bd2dc-6d76-45a2-99fa-9bd0c7d55dbd",
+  "url": "http://localhost:3000/api/webhooks/ea959a1c-9432-46ad-9572-c2fd8f7b6fea"
+}
+
+### 4. Pipeline 4 (Email) -> Final destination
+POST http://localhost:3000/api/subscribers
+Content-Type: application/json
+
+{
+  "pipelineId": "66c69421-bc23-4540-a791-7af308c6aba1",
+  "url": "https://webhook.site/eb208e66-651f-40e2-96eb-4003dfbbbcf1" 
 }
 
 ### Edit subscriber by id
-PUT http://localhost:3000/api/subscribers/9dbc97bd-c3cb-4778-9807-5ab90090cab3
+PUT http://localhost:3000/api/subscribers/427ffbee-ee71-434e-9a90-453da9d390b4
 Content-Type: application/json
 
 {
@@ -139,18 +214,37 @@ Content-Type: application/json
 }
 
 ### Delete subscriber by id
-DELETE http://localhost:3000/api/subscribers/9dbc97bd-c3cb-4778-9807-5ab90090cab3
+DELETE http://localhost:3000/api/subscribers/4b8f0eae-70de-4db3-be73-5e275347af59
 
-### ─── JOBS ────────────────────────────────────────────
+
+### ─── JOBS & DELIVERIES ────────────────────────────────
 
 ### Get all jobs
 GET http://localhost:3000/api/jobs
 
 ### Get jobs by pipeline id
-GET http://localhost:3000/api/jobs?pipelineId=PASTE_PIPELINE_ID_HERE
-
-### Get job by id
-GET http://localhost:3000/api/jobs/PASTE_JOB_ID_HERE
+GET http://localhost:3000/api/jobs?pipelineId=04df5936-4b81-414e-a3b3-f640c17aafad
 
 ### Get delivery attempts by job id
-GET http://localhost:3000/api/jobs/PASTE_JOB_ID_HERE/deliveries
+GET http://localhost:3000/api/jobs/e12ca810-6898-4c62-85d7-6735a5e38f44/deliveries
+
+
+### ─── WORKFLOW TRIGGER (TEST) ──────────────────────────
+
+### Test Full Chain: Calculate total -> Email template -> Translate -> Send email
+POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+Content-Type: application/json
+
+{
+  "customer": "Anton",
+  "email": "anton.yak12@yamail.com",
+  "lang": "en",
+  "store_name": "Ruta Austral",
+  "date": "2026-05-27",
+  "status": "En proceso de envío",
+  "subject": "Order Confirmation / Confirmación de compra",
+  "items": [
+    { "name": "Café Tueste Medio 250g", "quantity": 12, "price": 8500 },
+    { "name": "Filtros de papel V60", "quantity": 2, "price": 4500 }
+  ]
+}

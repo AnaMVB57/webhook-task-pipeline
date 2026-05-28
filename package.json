@@ -29,7 +29,8 @@
     "@eslint/js": "^10.0.1",
     "@types/eslint-plugin-security": "^3.0.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.9.0",
+    "@types/node": "^25.9.1",
+    "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
@@ -42,9 +43,11 @@
     "typescript-eslint": "^8.59.4"
   },
   "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
+    "nodemailer": "^8.0.8",
     "postgres": "^3.4.9",
     "zod": "^4.4.3"
   }
