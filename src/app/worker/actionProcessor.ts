@@ -165,6 +165,7 @@ async function translateText(
     console.warn(
       `[Translate API] Body translation unavailable. Using default message. ${error}`,
     );
+    console.log(`──────────────────────────────────────────────────\n`);
   }
 
   // Translate the subject (if given in the config)
@@ -175,6 +176,7 @@ async function translateText(
       console.warn(
         `[Translate API] Subject translation unavailable. Using default message. ${error}`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
     }
   }
 
@@ -252,7 +254,9 @@ async function sendEmail(
     });
 
     const previewUrl = nodemailer.getTestMessageUrl(info);
+    console.log(`──────────────────────────────────────────────────\n`);
     console.log(`-> Email preview URL: ${previewUrl}`);
+    console.log(`──────────────────────────────────────────────────\n`);
 
     return {
       ...payload,

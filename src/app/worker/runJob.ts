@@ -17,6 +17,7 @@ export async function runJob(job: Job): Promise<void> {
   // Skip jobs already completed or permanently failed
   if (freshJob.status === "completed" || freshJob.status === "failed") {
     console.log(`[Worker] Skipping job ${job.id} — already ${freshJob.status}`);
+    console.log(`──────────────────────────────────────────────────\n`);
     return;
   }
 
@@ -25,6 +26,7 @@ export async function runJob(job: Job): Promise<void> {
     console.warn(
       `[Worker] Job ${job.id} reached max attempts (${freshJob.maxAttempts}), marking as failed`,
     );
+    console.log(`──────────────────────────────────────────────────\n`);
     await updateJobStatus(job.id, "failed");
     return;
   }
@@ -32,6 +34,7 @@ export async function runJob(job: Job): Promise<void> {
   console.log(
     `[Worker] Processing job ${job.id} (attempt ${freshJob.attempts + 1}/${freshJob.maxAttempts})`,
   );
+  console.log(`──────────────────────────────────────────────────\n`);
 
   await incrementJobAttempts(job.id, "processing");
 
@@ -56,6 +59,7 @@ export async function runJob(job: Job): Promise<void> {
       console.warn(
         `* [WARNING] - Infinite loop detected on job - ${job.id} (Pipeline: ${pipelineData.name})`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
       await updateJobStatus(job.id, "failed");
       return;
     }
@@ -82,12 +86,14 @@ export async function runJob(job: Job): Promise<void> {
       console.log(
         `[Worker] Job ${job.id} completed — no active subscribers to deliver to`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
       return;
     }
 
     await deliverToAllSubscribers(job.id, activeSubscribers, output);
 
     console.log(`Job ${job.id} completed successfully`);
+    console.log(`──────────────────────────────────────────────────\n`);
   } catch (error) {
     // Mark job as failed is anything goes wrong
     const errorMessage =
@@ -105,6 +111,7 @@ export async function runJob(job: Job): Promise<void> {
       console.error(
         `[Worker] Aborting retries for Job ${job.id} due to corrupt or missing data.`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
       await updateJobStatus(job.id, "failed");
       return;
     }
@@ -117,12 +124,14 @@ export async function runJob(job: Job): Promise<void> {
       console.error(
         `[Worker] Job ${job.id} failed all retry attempts (${freshJob.maxAttempts}/${freshJob.maxAttempts}). Marking as 'failed' definitely.`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
       await updateJobStatus(job.id, "failed");
     } else {
       // There's still retries left. Mark as 'pending' so that polling will retry.
       console.warn(
         `[Worker] Retry programmed for Job ${job.id} (${currentAttempt}/${freshJob.maxAttempts}). Coming back to 'pending' status.`,
       );
+      console.log(`──────────────────────────────────────────────────\n`);
       await updateJobStatus(job.id, "pending");
     }
   }
