@@ -1,7 +1,10 @@
 import { eq } from "drizzle-orm";
 import { subscribers, NewSubscriber } from "../../../db/schema.js";
 import { db } from "../../index.js";
-import { BadRequestError, NotFoundError } from "../../../app/middleware/error/errors.js";
+import {
+  BadRequestError,
+  NotFoundError,
+} from "../../../app/middleware/error/errors.js";
 
 export async function getAllSubscribers() {
   return await db.select().from(subscribers);
@@ -32,15 +35,15 @@ export async function createSubscriber(data: NewSubscriber) {
   } catch {
     throw new BadRequestError(`Invalid subscriber URL format: "${data.url}"`);
   }
-  
-  const [result] = await db
-    .insert(subscribers)
-    .values(data)
-    .returning();
+
+  const [result] = await db.insert(subscribers).values(data).returning();
   return result;
 }
 
-export async function updateSubscriber(id: string, data: Partial<NewSubscriber>) {
+export async function updateSubscriber(
+  id: string,
+  data: Partial<NewSubscriber>,
+) {
   const [result] = await db
     .update(subscribers)
     .set(data)

@@ -10,13 +10,9 @@ export async function getDeliveryAttemptsByJobId(jobId: string) {
 }
 
 export async function createDeliveryAttempt(data: NewDeliveryAttempt) {
-  const [result] = await db
-    .insert(deliveryAttempts)
-    .values(data)
-    .returning();
+  const [result] = await db.insert(deliveryAttempts).values(data).returning();
   return result;
 }
-
 
 export async function deleteAllDeliveryAttempts() {
   return await db.delete(deliveryAttempts);

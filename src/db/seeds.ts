@@ -1,9 +1,18 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { actions, deliveryAttempts, jobs, pipelines, subscribers, users } from "./schema.js";
+import {
+  actions,
+  deliveryAttempts,
+  jobs,
+  pipelines,
+  subscribers,
+  users,
+} from "./schema.js";
 import * as schema from "./schema.js";
 
-const queryClient = postgres(process.env.DB_URL || "postgres://postgres:postgres@db:5432/webhook_pipeline");
+const queryClient = postgres(
+  process.env.DB_URL || "postgres://postgres:postgres@db:5432/webhook_pipeline",
+);
 const db = drizzle(queryClient, { schema });
 
 async function main() {
@@ -32,7 +41,7 @@ async function main() {
       name: "Charles Babbage",
       email: "charles@example.com",
       active: true,
-    }
+    },
   ]);
 
   // 3. SEED ACTIONS
@@ -42,13 +51,20 @@ async function main() {
       id: "9e9baf6f-bcf7-4428-b2c7-250027482c5f",
       name: "CALCULATE_TOTAL",
       description: "Sums numeric values from an array field in the payload",
-      config: { arrayField: "items", priceField: "price", quantityField: "quantity" },
+      config: {
+        arrayField: "items",
+        priceField: "price",
+        quantityField: "quantity",
+      },
     },
     {
       id: "80316db3-b39f-4f46-a130-595d6a26c722",
       name: "TEXT_TEMPLATER",
       description: "Fills a text template with payload values",
-      config: { template: "Hello {{customer}}!\n\nThank you for choosing {{store_name}}. This is a summary of your purchase made on {{date}}:\n\n{{items}}\n\nSubtotal: ${{subtotal}}\nTotal paid: ${{total_amount}}\n\nCurrent status of your order: {{status}}\n\nWe hope to see you soon!" },
+      config: {
+        template:
+          "Hello {{customer}}!\n\nThank you for choosing {{store_name}}. This is a summary of your purchase made on {{date}}:\n\n{{items}}\n\nSubtotal: ${{subtotal}}\nTotal paid: ${{total_amount}}\n\nCurrent status of your order: {{status}}\n\nWe hope to see you soon!",
+      },
     },
     {
       id: "f2d8b728-ce46-443d-a815-f175c2599b2d",
@@ -60,8 +76,12 @@ async function main() {
       id: "47f6ecf5-4e64-426f-b25b-504b3d3f0c68",
       name: "SEND_EMAIL",
       description: "Sends the translated text as an email via Ethereal",
-      config: { toField: "email", subjectField: "subject", bodyField: "translated_text" },
-    }
+      config: {
+        toField: "email",
+        subjectField: "subject",
+        bodyField: "translated_text",
+      },
+    },
   ]);
 
   // 4. SEED PIPELINES
@@ -125,7 +145,7 @@ async function main() {
       userId: "3a71bddd-2e10-482f-b05e-5293810badd2",
       actionId: "f2d8b728-ce46-443d-a815-f175c2599b2d",
       active: true,
-    }
+    },
   ]);
 
   // 5. SEED SUBSCRIBERS
@@ -168,7 +188,7 @@ async function main() {
       pipelineId: "c3333333-3333-3333-3333-333333333333", // Loop 3 -> Points BACK to Loop 2 (Triggers Infinite Cycle)
       url: "http://app:3000/api/webhooks/loop-token-template-000000000002",
       active: true,
-    }
+    },
   ]);
 
   console.log("Database successfully seeded and ready for testing!");

@@ -50,7 +50,9 @@ export const pipelines = pgTable("pipelines", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   name: text("name").notNull(),
-  sourceToken: text("source_token").notNull().unique()
+  sourceToken: text("source_token")
+    .notNull()
+    .unique()
     .$defaultFn(() => randomUUID()),
   userId: text("user_id")
     .notNull()

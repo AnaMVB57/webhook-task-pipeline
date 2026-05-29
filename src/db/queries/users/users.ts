@@ -8,10 +8,7 @@ export async function getAllUsers() {
 }
 
 export async function getUserById(id: string) {
-  const [result] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, id));
+  const [result] = await db.select().from(users).where(eq(users.id, id));
 
   if (!result) {
     throw new NotFoundError("User not found");
@@ -49,10 +46,7 @@ export async function updateUser(id: string, data: Partial<NewUser>) {
 }
 
 export async function deleteUser(id: string) {
-  const [result] = await db
-    .delete(users)
-    .where(eq(users.id, id))
-    .returning();
+  const [result] = await db.delete(users).where(eq(users.id, id)).returning();
 
   if (!result) {
     throw new NotFoundError("User not found");

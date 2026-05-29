@@ -50,7 +50,7 @@ app.get("/health", (_req, res) => {
 
 // Reset delivery attempts and jobs
 app.post("/api/jobs/reset", async (req, res) => {
-    try {
+  try {
     console.log("[Database] Clearing jobs and delivery attempts history...");
 
     // 1. Delete delivery attempts

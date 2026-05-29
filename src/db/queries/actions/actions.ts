@@ -8,10 +8,7 @@ export async function getAllActions() {
 }
 
 export async function getActionById(id: string) {
-  const [result] = await db
-    .select()
-    .from(actions)
-    .where(eq(actions.id, id));
+  const [result] = await db.select().from(actions).where(eq(actions.id, id));
 
   if (!result) {
     throw new NotFoundError("Action not found");

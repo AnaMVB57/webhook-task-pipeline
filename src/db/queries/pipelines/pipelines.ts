@@ -34,10 +34,7 @@ export async function getPipelineBySourceToken(sourceToken: string) {
 }
 
 export async function createPipeline(data: NewPipeline) {
-  const [result] = await db
-    .insert(pipelines)
-    .values(data)
-    .returning();
+  const [result] = await db.insert(pipelines).values(data).returning();
 
   return result;
 }

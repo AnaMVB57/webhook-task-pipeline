@@ -54,9 +54,7 @@
         "actions_name_unique": {
           "name": "actions_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -125,12 +123,8 @@
           "name": "pipelines_user_id_users_id_fk",
           "tableFrom": "pipelines",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -138,12 +132,8 @@
           "name": "pipelines_action_id_actions_id_fk",
           "tableFrom": "pipelines",
           "tableTo": "actions",
-          "columnsFrom": [
-            "action_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["action_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -153,9 +143,7 @@
         "pipelines_source_token_unique": {
           "name": "pipelines_source_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "source_token"
-          ]
+          "columns": ["source_token"]
         }
       },
       "policies": {},
@@ -213,9 +201,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
