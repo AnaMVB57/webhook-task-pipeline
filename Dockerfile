@@ -5,7 +5,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN npm install -g pnpm@11.4.0 
 
 # Copy dependency files first — Docker caches this layer if they don't change
 COPY package.json pnpm-lock.yaml ./
@@ -22,7 +22,7 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@11.4.0
 
 # Copy dependency files and install production dependencies only
 COPY package.json pnpm-lock.yaml ./
