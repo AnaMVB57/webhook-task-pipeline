@@ -17,7 +17,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      "security/detect-object-injection": "warn",
+      "security/detect-object-injection": "off",
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },

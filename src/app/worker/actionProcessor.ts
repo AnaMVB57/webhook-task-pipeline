@@ -82,7 +82,8 @@ function textTemplater(
       const value = payload[key];
 
       if (Array.isArray(value)) {
-        if (value.length === 0) return "(No selected products. Please contact support.)";
+        if (value.length === 0)
+          return "(No selected products. Please contact support.)";
         return value
           .map(
             (item) =>
@@ -95,7 +96,7 @@ function textTemplater(
         return String(value);
       }
 
-    // If it doesn't exist in payload, uses fallback. If doesn't, it's left empty.
+      // If it doesn't exist in payload, uses fallback. If doesn't, it's left empty.
       return fallbacks[key] !== undefined ? fallbacks[key] : "";
     },
   );
@@ -173,10 +174,10 @@ async function translateText(
     try {
       translatedSubject = await fetchTranslation(subjectToTranslate);
     } catch (error) {
-      console.warn(
-        `[Translate API] Subject translation unavailable. Using default message. ${error}`,
+      throw new Error(
+        "[Translate API] Subject translation unavailable. Using default message.",
+        { cause: error },
       );
-      console.log(`──────────────────────────────────────────────────\n`);
     }
   }
 
@@ -264,12 +265,9 @@ async function sendEmail(
       email_preview_url: previewUrl || null,
     };
   } catch (error) {
-    console.error(
-      "Error connecting to email service or sending email: ",
-      error,
-    );
     throw new Error(
       `Failed to send email: ${error instanceof Error ? error.message : "Unknown error"}`,
+      { cause: error },
     );
   }
 }
