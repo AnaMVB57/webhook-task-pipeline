@@ -9,7 +9,7 @@
     "db:studio": "drizzle-kit studio",
     "build": "npx tsc",
     "start": "node dist/main.js",
-    "dev": "tsx watch ./src/main.ts",
+    "dev": "concurrently \"tsx watch ./src/main.ts\" \"pnpm drizzle-kit studio\"",
     "format:write": "prettier --write \"src/**/*.{js,ts,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{js,ts,json,css,md}\"",
     "lint": "eslint ."
@@ -32,6 +32,7 @@
     "@types/node": "^25.9.1",
     "@types/nodemailer": "^8.0.0",
     "@types/pg": "^8.20.0",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
     "eslint-plugin-security": "^4.0.0",
@@ -40,14 +41,14 @@
     "prettier": "3.8.3",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.4"
+    "typescript-eslint": "^8.60.0"
   },
   "dependencies": {
     "@vitalets/google-translate-api": "^9.2.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
-    "nodemailer": "^8.0.8",
+    "nodemailer": "^8.0.9",
     "postgres": "^3.4.9",
     "zod": "^4.4.3"
   }

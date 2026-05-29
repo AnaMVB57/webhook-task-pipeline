@@ -118,5 +118,9 @@ app.post("/api/webhooks/:sourceToken", handleWebhook);
 app.use(errorHandler);
 
 app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+  console.log(`\n🚀 ─── SERVER INITIALIZED ───`);
+  console.log(`Status: Running on port ${config.port}`);
+  console.log(`Pipeline dashboard: http://localhost:${config.port}`);
+  console.log(`Drizzle Studio:    https://local.drizzle.studio`);
+  console.log(`───────────────────────────────\n`);
 });
