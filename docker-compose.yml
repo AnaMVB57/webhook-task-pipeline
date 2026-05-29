@@ -10,6 +10,52 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+  migrate: 
+    build: .
+    environment:
+      DB_URL: postgres://postgres:postgres@db:5432/webhook_pipeline
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    # Runs migrations and exits — not a long-running service
+    command: ["node", "dist/db/migrate.js"]
+    restart: "no"
+    
+  seed:
+    build: .
+    environment:
+      DB_URL: postgres://postgres:postgres@db:5432/webhook_pipeline
+      NODE_ENV: production
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["node", "dist/db/seeds.js"]
+    restart: "no"
+
+  app: 
+    build: .
+    ports:
+      - "3000:3000"
+      - "4983:4983"
+    environment:
+      DB_URL: postgres://postgres:postgres@db:5432/webhook_pipeline
+      PORT: 3000
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      seed:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    
 volumes:
   postgres_data:
