@@ -8,8 +8,8 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy dependency files first — Docker caches this layer if they don't change
-COPY package.json ./
-RUN pnpm install
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source and compile
 COPY tsconfig.json ./
@@ -25,8 +25,8 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy dependency files and install production dependencies only
-COPY package.json ./
-RUN pnpm install --prod
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy compiled output from builder stage
 COPY --from=builder /app/dist ./dist
