@@ -63,9 +63,6 @@ export async function runJob(job: Job): Promise<void> {
     currentPayload._trace = [...trace, pipelineData.sourceToken];
     job.payload = currentPayload;
 
-    console.log(`Pipeline: ${job.pipelineId}`);
-    console.log(`Payload:`, JSON.stringify(job.payload, null, 2));
-
     const action = await getActionById(pipelineData.actionId);
 
     // Execute the action on the payload
