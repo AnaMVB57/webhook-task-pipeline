@@ -1,15 +1,18 @@
 # Variables for VS Code REST Client
 @ldelim = {{
 @rdelim = }}
+@host = http://localhost:3000
 
 ### Health check
-GET http://localhost:3000/health
+GET {{host}}/health
 
 
-### ─── USERS ───────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── USERS ────────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Create user
-POST http://localhost:3000/api/users
+POST {{host}}/api/users
 Content-Type: application/json
 
 {
@@ -18,13 +21,13 @@ Content-Type: application/json
 }
 
 ### Get all users
-GET http://localhost:3000/api/users
+GET {{host}}/api/users
 
 ### Get user by id
-GET http://localhost:3000/api/users/9c83aeee-4f10-4538-a55a-b7053b7bf0a2
+GET {{host}}/api/users/9c83aeee-4f10-4538-a55a-b7053b7bf0a2
 
 ### Edit user
-PUT http://localhost:3000/api/users/9c83aeee-4f10-4538-a55a-b7053b7bf0a2
+PUT {{host}}/api/users/9c83aeee-4f10-4538-a55a-b7053b7bf0a2
 Content-Type: application/json
 
 {
@@ -33,19 +36,21 @@ Content-Type: application/json
 }
 
 ### Delete user by id
-DELETE http://localhost:3000/api/users/46dd8d78-f82f-4159-8674-6685c48b969c
+DELETE {{host}}/api/users/46dd8d78-f82f-4159-8674-6685c48b969c
 
 
-### ─── ACTIONS ─────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── ACTIONS ──────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Get all actions
-GET http://localhost:3000/api/actions
+GET {{host}}/api/actions
 
 ### Get action by id
-GET http://localhost:3000/api/actions/73619324-2e47-4570-9787-489f172bdba3
+GET {{host}}/api/actions/73619324-2e47-4570-9787-489f172bdba3
 
 ### Action 1: CALCULATE_TOTAL
-POST http://localhost:3000/api/actions
+POST {{host}}/api/actions
 Content-Type: application/json
 
 {
@@ -55,7 +60,7 @@ Content-Type: application/json
 }
 
 ### Action 2: TEXT_TEMPLATER
-POST http://localhost:3000/api/actions
+POST {{host}}/api/actions
 Content-Type: application/json
 
 {
@@ -65,7 +70,7 @@ Content-Type: application/json
 }
 
 ### Action 3: TRANSLATE_TEXT
-POST http://localhost:3000/api/actions
+POST {{host}}/api/actions
 Content-Type: application/json
 
 {
@@ -75,7 +80,7 @@ Content-Type: application/json
 }
 
 ### Action 4: SEND_EMAIL
-POST http://localhost:3000/api/actions
+POST {{host}}/api/actions
 Content-Type: application/json
 
 {
@@ -84,8 +89,8 @@ Content-Type: application/json
   "config": { "toField": "email", "subjectField": "subject", "bodyField": "translated_text" }
 }
 
-### Update action config (Example)
-PUT http://localhost:3000/api/actions/9e9baf6f-bcf7-4428-b2c7-250027482c5f
+### Update action config (Example 1)
+PUT {{host}}/api/actions/9e9baf6f-bcf7-4428-b2c7-250027482c5f
 Content-Type: application/json
 
 {
@@ -96,8 +101,8 @@ Content-Type: application/json
   }
 }
 
-### Update action config (Example)
-PUT http://localhost:3000/api/actions/f2d8b728-ce46-443d-a815-f175c2599b2d
+### Update action config (Example 2)
+PUT {{host}}/api/actions/f2d8b728-ce46-443d-a815-f175c2599b2d
 Content-Type: application/json
 
 {
@@ -108,41 +113,42 @@ Content-Type: application/json
   }
 }
 
-### Update action config (Example)
-PUT http://localhost:3000/api/actions/47f6ecf5-4e64-426f-b25b-504b3d3f0c68
+### Update action config (Example 3)
+PUT {{host}}/api/actions/47f6ecf5-4e64-426f-b25b-504b3d3f0c68
 Content-Type: application/json
 
 {
   "config": {
-  "toField": "email",
-  "subjectField": "translated_subject",
-  "bodyField": "translated_text"
-}
+    "toField": "email",
+    "subjectField": "translated_subject",
+    "bodyField": "translated_text"
+  }
 }
 
-### Update Action 2: TEXT_TEMPLATER
-PUT http://localhost:3000/api/actions/80316db3-b39f-4f46-a130-595d6a26c722
+### Update Action 2: TEXT_TEMPLATER (fixed template with @ldelim/@rdelim)
+PUT {{host}}/api/actions/80316db3-b39f-4f46-a130-595d6a26c722
 Content-Type: application/json
 
 {
-  "config": { "template": "Hello {{}}customer{{}}!\n\nThank you for choosing {{}}store_name{{}}. This is a summary of your purchase made on {{}}date{{}}:\n\n{{}}items{{}}\n\nSubtotal: ${{}}subtotal{{}}\nTotal paid: ${{}}total_amount{{}}\n\nCurrent status of your order: {{}}status{{}}\n\nWe hope to see you soon!" }
+  "config": { "template": "Hello {{ldelim}}customer{{rdelim}}!\n\nThank you for choosing {{ldelim}}store_name{{rdelim}}. This is a summary of your purchase made on {{ldelim}}date{{rdelim}}:\n\n{{ldelim}}items{{rdelim}}\n\nSubtotal: ${{ldelim}}subtotal{{rdelim}}\nTotal paid: ${{ldelim}}total_amount{{rdelim}}\n\nCurrent status of your order: {{ldelim}}status{{rdelim}}\n\nWe hope to see you soon!" }
 }
 
-
 ### Delete action by id
-DELETE http://localhost:3000/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
+DELETE {{host}}/api/actions/87cdfa09-81e8-4521-b24e-155a05d9fd74
 
 
-### ─── PIPELINES ───────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── PIPELINES ────────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Get all pipelines
-GET http://localhost:3000/api/pipelines
+GET {{host}}/api/pipelines
 
 ### Get pipeline by id
-GET http://localhost:3000/api/pipelines/bf8ccd92-763b-4cb1-a38d-b21248a1a59f
+GET {{host}}/api/pipelines/bf8ccd92-763b-4cb1-a38d-b21248a1a59f
 
 ### Create pipeline 1 (Calculate)
-POST http://localhost:3000/api/pipelines
+POST {{host}}/api/pipelines
 Content-Type: application/json
 
 {
@@ -152,7 +158,7 @@ Content-Type: application/json
 }
 
 ### Create pipeline 2 (Template)
-POST http://localhost:3000/api/pipelines
+POST {{host}}/api/pipelines
 Content-Type: application/json
 
 {
@@ -162,7 +168,7 @@ Content-Type: application/json
 }
 
 ### Create pipeline 3 (Translate)
-POST http://localhost:3000/api/pipelines
+POST {{host}}/api/pipelines
 Content-Type: application/json
 
 {
@@ -172,7 +178,7 @@ Content-Type: application/json
 }
 
 ### Create pipeline 4 (Email)
-POST http://localhost:3000/api/pipelines
+POST {{host}}/api/pipelines
 Content-Type: application/json
 
 {
@@ -182,7 +188,7 @@ Content-Type: application/json
 }
 
 ### Edit pipeline by id
-PUT http://localhost:3000/api/pipelines/da8bc89a-85b1-48e5-a44e-44afe36b4846
+PUT {{host}}/api/pipelines/da8bc89a-85b1-48e5-a44e-44afe36b4846
 Content-Type: application/json
 
 {
@@ -191,46 +197,48 @@ Content-Type: application/json
 }
 
 ### Delete pipeline by id
-DELETE http://localhost:3000/api/pipelines/04df5936-4b81-414e-a3b3-f640c17aafad
+DELETE {{host}}/api/pipelines/04df5936-4b81-414e-a3b3-f640c17aafad
 
 
-### ─── SUBSCRIBERS ─────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── SUBSCRIBERS ──────────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Get all subscribers
-GET http://localhost:3000/api/subscribers
+GET {{host}}/api/subscribers
 
 ### Get subscribers by pipeline id
-GET http://localhost:3000/api/subscribers/pipeline/33bdc773-5f6a-4a76-8b89-77262579ebda
+GET {{host}}/api/subscribers/pipeline/33bdc773-5f6a-4a76-8b89-77262579ebda
 
 ### 1. Pipeline 1 (Calculate) -> points to Pipeline 2 (Template)
-POST http://localhost:3000/api/subscribers
+POST {{host}}/api/subscribers
 Content-Type: application/json
 
 {
   "pipelineId": "9ccaa884-91f0-482f-a05e-5293810badd1",
-  "url": "http://localhost:3000/api/webhooks/674b821f-086e-4e47-a955-936e18662654"
+  "url": "{{host}}/api/webhooks/674b821f-086e-4e47-a955-936e18662654"
 }
 
 ### 2. Pipeline 2 (Template) -> points to Pipeline 3 (Translate)
-POST http://localhost:3000/api/subscribers
+POST {{host}}/api/subscribers
 Content-Type: application/json
 
 {
   "pipelineId": "f065e32e-0f05-48ad-bf69-98189653a32d",
-  "url": "http://localhost:3000/api/webhooks/e5cc6c39-734b-4dd0-96d6-2da58996c04c"
+  "url": "{{host}}/api/webhooks/e5cc6c39-734b-4dd0-96d6-2da58996c04c"
 }
 
 ### 3. Pipeline 3 (Translate) -> points to Pipeline 4 (Email)
-POST http://localhost:3000/api/subscribers
+POST {{host}}/api/subscribers
 Content-Type: application/json
 
 {
   "pipelineId": "140bd2dc-6d76-45a2-99fa-9bd0c7d55dbd",
-  "url": "http://localhost:3000/api/webhooks/ea959a1c-9432-46ad-9572-c2fd8f7b6fea"
+  "url": "{{host}}/api/webhooks/ea959a1c-9432-46ad-9572-c2fd8f7b6fea"
 }
 
 ### 4. Pipeline 4 (Email) -> Final destination
-POST http://localhost:3000/api/subscribers
+POST {{host}}/api/subscribers
 Content-Type: application/json
 
 {
@@ -239,7 +247,7 @@ Content-Type: application/json
 }
 
 ### Edit subscriber by id
-PUT http://localhost:3000/api/subscribers/427ffbee-ee71-434e-9a90-453da9d390b4
+PUT {{host}}/api/subscribers/427ffbee-ee71-434e-9a90-453da9d390b4
 Content-Type: application/json
 
 {
@@ -247,25 +255,29 @@ Content-Type: application/json
 }
 
 ### Delete subscriber by id
-DELETE http://localhost:3000/api/subscribers/4b8f0eae-70de-4db3-be73-5e275347af59
+DELETE {{host}}/api/subscribers/4b8f0eae-70de-4db3-be73-5e275347af59
 
 
-### ─── JOBS & DELIVERIES ────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── JOBS & DELIVERIES ────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Get all jobs
-GET http://localhost:3000/api/jobs
+GET {{host}}/api/jobs
 
 ### Get jobs by pipeline id
-GET http://localhost:3000/api/jobs?pipelineId=04df5936-4b81-414e-a3b3-f640c17aafad
+GET {{host}}/api/jobs?pipelineId=04df5936-4b81-414e-a3b3-f640c17aafad
 
 ### Get delivery attempts by job id
-GET http://localhost:3000/api/jobs/e12ca810-6898-4c62-85d7-6735a5e38f44/deliveries
+GET {{host}}/api/jobs/e12ca810-6898-4c62-85d7-6735a5e38f44/deliveries
 
 
-### ─── WORKFLOW TRIGGER (TEST) ──────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── WORKFLOW TRIGGER (TEST CASES) ────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
-### Test Full Chain: Calculate total -> Email template -> Translate -> Send email
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+### Test Full Chain: Success with Translation (Target Language: Portuguese)
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -282,10 +294,8 @@ Content-Type: application/json
   ]
 }
 
-# ______________________________________________________________________________
-
 ### Test Error handling (malformed JSON: missing closing quote for "customer")
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -302,7 +312,7 @@ Content-Type: application/json
 }
 
 ### Test Error handling (missing 'store_name', 'date', 'status' fields)
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -313,7 +323,7 @@ Content-Type: application/json
 }
 
 ### Test Error handling (missing 'email' field, empty items)
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -325,14 +335,15 @@ Content-Type: application/json
   "items": []
 }
 
-### ────────────────────────────────────────────────────────────────────────────
-### TEST CASES: NEW VALIDATIONS & RETRY LOGIC
-### ────────────────────────────────────────────────────────────────────────────
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ─── EXTRA EDGE CASES: VALIDATIONS & RETRY LOGIC ──────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
 
 ### Case 1: Fatal Error in CALCULATE_TOTAL (Empty items array)
 ### Expected: Pipeline throws "ValidationError". Worker aborts retries
 ### immediately and the Job ends in 'failed' (Attempt 1/3 only).
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -343,10 +354,9 @@ Content-Type: application/json
   "items": []
 }
 
-
 ### Case 2: Fatal Error in CALCULATE_TOTAL (Item without price)
 ### Expected: Throws "ValidationError" at the item index. Aborts retries.
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -360,12 +370,11 @@ Content-Type: application/json
   ]
 }
 
-
 ### Case 3: Success with Fallbacks in TEXT_TEMPLATER (Missing business fields)
 ### Expected: Pipeline finishes SUCCESSFULLY. Does not break due to empty fields;
 ### the email will be sent using default values ("Our Store", today's date, etc.)
 ### Language: German ("de")
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -377,11 +386,10 @@ Content-Type: application/json
   ]
 }
 
-
 ### Case 4: Successful Bypass in TRANSLATE_TEXT (Target Language: English)
 ### Expected: Detects "lang": "en" and interrupts the flow to MyMemory API.
 ### Avoids the "SAME_LANGUAGES" error and processes everything in a single, instant attempt.
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -397,11 +405,10 @@ Content-Type: application/json
   ]
 }
 
-
 ### Case 5: Fatal Error in SEND_EMAIL (No email property in the payload)
 ### Expected: Actions 1, 2, and 3 succeed. Upon reaching SEND_EMAIL it throws
 ### "ValidationError: The email field..." and stops dead without useless retries.
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
@@ -413,13 +420,12 @@ Content-Type: application/json
   ]
 }
 
-
 ### Case 6: Simulation of Temporary Error (External Translation API Down/Invalid)
 ### Expected: Send a language pair that breaks the API or an invalid code ("xyz").
 ### If your `fetchTranslation` sub-function throws a common error (not a ValidationError),
 ### you will see in your console how the job changes to 'pending' and retries every 10 seconds
 ### until exhausting the 3 attempts in your WSL terminal.
-POST http://localhost:3000/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
+POST {{host}}/api/webhooks/dd777e4f-5236-464d-8a20-387143798446
 Content-Type: application/json
 
 {
