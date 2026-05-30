@@ -9,6 +9,10 @@ RUN npm install -g pnpm@11.4.0
 
 # Copy dependency files first — Docker caches this layer if they don't change
 COPY package.json pnpm-lock.yaml ./
+
+# Approve builds from all packages (needed for esbuild)
+RUN pnpm approve-builds --yes
+
 RUN pnpm install --frozen-lockfile
 
 # Copy source and compile
@@ -26,6 +30,10 @@ RUN npm install -g pnpm@11.4.0
 
 # Copy dependency files and install production dependencies only
 COPY package.json pnpm-lock.yaml ./
+
+# Approve builds from all packages (needed for esbuild)
+RUN pnpm approve-builds --yes
+
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy compiled output from builder stage
