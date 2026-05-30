@@ -401,6 +401,27 @@ users
 <img width="1600" height="840" alt="db diagram" src="https://github.com/user-attachments/assets/b15a0649-e4f1-4dff-ad86-e033ebc1e97a" />
  
 ---
+
+## 📊 Control Center Dashboard & Monitoring
+
+The project includes an embedded web dashboard designed to provide full observability into the ingestion pipeline, allowing you to audit, debug, and monitor background tasks visually.
+
+### Information Contained in the UI
+Each job is rendered as an isolated execution card that acts as a comprehensive audit log, displaying:
+* **Job ID:** The unique tracking UUID (truncated for readability) alongside its current execution status badge (`pending`, `processing`, `completed`, or `failed`).
+* **Pipeline context:** The name of the originating pipeline configuration that captured the incoming webhook.
+* **Resiliency tracking:** A live attempts counter (`attempts / maxAttempts`) indicating whether the job has faced delivery retries or exponential backoff triggers.
+* **State Inspector Drawer:** An expandable `<details>` block housing the raw JSON structures. It maps both the initial inputs and the final `/* Execution Output */` fields side-by-side to ensure full data lineage tracking.
+
+<img width="1858" height="924" alt="dashboard ui" src="https://github.com/user-attachments/assets/9f883383-ff42-4f97-bad4-5ad1e775738f" />
+
+### How real-time polling works
+To bridge the gap between headless background workers and the client interface, the UI implements an efficient client-side polling cycle:
+1. **Automated synchronization:** Upon loading `http://localhost:3000`, a background timing mechanism (`setInterval`) invokes non-blocking asynchronous fetch operations targeting the `/api/jobs` endpoint every few seconds.
+2. **State delta mapping:** The application processes the returning JSON payload array, identifying adjustments in state variables or updated timestamps since the last client execution sweep.
+3. **Graceful UI re-rendering:** When a state mutation is recognized (e.g., a background task transitioning smoothly from `pending` to `completed`), the dashboard swaps status badges, modifies borders, and dynamically appends or morphs specific link cards instantly without disrupting the scroll position or requiring full page refreshes.
+
+<img width="1656" height="985" alt="image" src="https://github.com/user-attachments/assets/bd161244-5336-4fcc-803b-911b97453a39" />
  
 ## 🛠️ Development Scripts
  
