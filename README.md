@@ -6,7 +6,7 @@ A robust, event-driven background job processing system built with Node.js and T
  
 ## Tech Stack
  
-- **Runtime**: Node.js 20 + TypeScript
+- **Runtime**: Node.js 22 + TypeScript
 - **Framework**: Express 5
 - **Database**: PostgreSQL 16 (via Docker)
 - **ORM**: Drizzle ORM
@@ -22,7 +22,7 @@ A robust, event-driven background job processing system built with Node.js and T
 ### Prerequisites
  
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Node.js 20+](https://nodejs.org/)
+- [Node.js 22+](https://nodejs.org/)
 - [pnpm](https://pnpm.io/installation)
 ### 1. Clone the repository
  
@@ -59,17 +59,11 @@ docker compose up -d db
 ```
  
 ### 5. Run database migrations
- 
-Generate the migration files and apply them to the database:
- 
+
+Apply the database schema and initialize the tables using Drizzle Kit:
+
 ```bash
-pnpm db:generate
-```
- 
-Then apply the generated SQL file directly:
- 
-```bash
-docker exec -i webhook-task-pipeline-db-1 psql -U postgres -d webhook_pipeline < src/db/migrations/<migration_file>.sql
+pnpm db:migrate:run
 ```
  
 ### 6. Start the development server
@@ -87,7 +81,7 @@ The API server and background worker start together on port `3000`.
 To run the full stack (database + application) with a single command:
  
 ```bash
-docker compose up --build
+docker compose up
 ```
  
 This starts:
@@ -95,7 +89,7 @@ This starts:
 - `app` — the Node.js API server and background worker
 > **Note:** you still need to apply database migrations manually after the first run (see step 5 above, replacing `localhost` with the container name if connecting from outside Docker).
  
-Access the API at `http://localhost:3000`.
+Access the dashboard UI at `http://localhost:3000`.
  
 ---
  
@@ -264,11 +258,11 @@ POST /api/webhooks/:sourceToken
   "lang": "en",
   "store_name": "Ruta Austral",
   "date": "2026-05-27",
-  "status": "En proceso de envío",
-  "subject": "Confirmación de compra",
+  "status": "Shipping in progress",
+  "subject": "Order confirmation",
   "items": [
-    { "name": "Café Tueste Medio 250g", "quantity": 12, "price": 8500 },
-    { "name": "Filtros de papel V60", "quantity": 2, "price": 4500 }
+    { "name": "Medium Roast Coffee 250g", "quantity": 12, "price": 8500 },
+    { "name": "V60 Paper Filters", "quantity": 2, "price": 4500 }
   ]
 }
 ```
