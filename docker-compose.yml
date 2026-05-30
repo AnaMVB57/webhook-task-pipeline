@@ -1,4 +1,6 @@
+# Defines the services that make up the application stack
 services:
+# Database storage service using an alpine postgres image
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -10,12 +12,14 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Verification mechanism to ensure postgresql is ready to accept queries
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # Transient service that applies database migrations and then exits
   migrate: 
     build: .
     environment:
@@ -28,6 +32,7 @@ services:
     command: ["node", "dist/db/migrate.js"]
     restart: "no"
     
+  # Transient service that runs seed scripts once migrations complete successfully
   seed:
     build: .
     environment:
@@ -39,6 +44,7 @@ services:
     command: ["node", "dist/db/seeds.js"]
     restart: "no"
 
+  # Core web server and background job processing worker application
   app: 
     build: .
     ports:
@@ -56,6 +62,8 @@ services:
       seed:
         condition: service_completed_successfully
     restart: unless-stopped
-    
+
+# Persistent volumes storage configuration    
 volumes:
+  # Named volume used to prevent data loss when database containers restart
   postgres_data:
