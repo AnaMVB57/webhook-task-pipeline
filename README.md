@@ -403,6 +403,8 @@ users
         └── jobs (pipeline_id → pipelines.id)
               └── delivery_attempts (job_id → jobs.id, subscriber_id → subscribers.id)
 ```
+
+<img width="1600" height="840" alt="db diagram" src="https://github.com/user-attachments/assets/b15a0649-e4f1-4dff-ad86-e033ebc1e97a" />
  
 ---
  
