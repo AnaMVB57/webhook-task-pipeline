@@ -92,6 +92,21 @@ This starts:
 Access the dashboard UI at `http://localhost:3000`.
  
 ---
+
+## 🗄️ Database Schema
+ 
+```
+users
+  └── pipelines (user_id → users.id)
+        ├── actions (action_id → actions.id)
+        ├── subscribers (pipeline_id → pipelines.id)
+        └── jobs (pipeline_id → pipelines.id)
+              └── delivery_attempts (job_id → jobs.id, subscriber_id → subscribers.id)
+```
+
+<img width="1600" height="840" alt="db diagram" src="https://github.com/user-attachments/assets/b15a0649-e4f1-4dff-ad86-e033ebc1e97a" />
+
+---
  
 ## 📚 API Reference
  
@@ -384,21 +399,6 @@ Deleting a pipeline automatically deletes its associated subscribers via `ON DEL
 ### Schema design — one action per pipeline
  
 Each pipeline is bound to exactly one action. Rather than supporting multi-step pipelines in a single record (which would require a complex `pipeline_steps` table), chaining is achieved by connecting pipelines together through subscriber URLs. This keeps the schema simple and each pipeline unit independently testable and reusable.
- 
----
- 
-## 🗄️ Database Schema
- 
-```
-users
-  └── pipelines (user_id → users.id)
-        ├── actions (action_id → actions.id)
-        ├── subscribers (pipeline_id → pipelines.id)
-        └── jobs (pipeline_id → pipelines.id)
-              └── delivery_attempts (job_id → jobs.id, subscriber_id → subscribers.id)
-```
-
-<img width="1600" height="840" alt="db diagram" src="https://github.com/user-attachments/assets/b15a0649-e4f1-4dff-ad86-e033ebc1e97a" />
  
 ---
 
