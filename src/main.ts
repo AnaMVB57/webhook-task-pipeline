@@ -39,6 +39,7 @@ import {
 import { handleWebhook } from "./app/api/webhooks/webhooks.js";
 import { deleteAllJobs } from "./db/queries/jobs/jobs.js";
 import { deleteAllDeliveryAttempts } from "./db/queries/deliveryAttempts/deliveryAttempts.js";
+import { startWorker } from "./app/worker/worker.js";
 
 const app = express();
 app.use(express.json());
@@ -122,4 +123,7 @@ app.listen(config.port, () => {
   console.log(`Status: Running on port ${config.port}`);
   console.log(`Pipeline dashboard: http://localhost:${config.port}`);
   console.log(`───────────────────────────────\n`);
+  
+  
+  startWorker();
 });
