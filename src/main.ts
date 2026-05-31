@@ -123,7 +123,6 @@ app.listen(config.port, () => {
   console.log(`Status: Running on port ${config.port}`);
   console.log(`Pipeline dashboard: http://localhost:${config.port}`);
   console.log(`───────────────────────────────\n`);
-  
-  
+
   startWorker();
 });
